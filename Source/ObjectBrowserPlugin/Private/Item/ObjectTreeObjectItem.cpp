@@ -1,50 +1,29 @@
+﻿
 
+#include "Item/ObjectTreeObjectItem.h"
 
-#include "Model/ObjectBrowserDescriptor.h"
-
-#include "SourceCodeNavigation.h"
-#include "ObjectBrowserFlags.h"
 #include "ObjectBrowserModule.h"
+#include "ObjectBrowserStyle.h"
 #include "ObjectBrowserUtils.h"
-#include "ToolMenu.h"
+#include "SourceCodeNavigation.h"
 #include "Interfaces/IPluginManager.h"
 #include "Model/ObjectBrowserModel.h"
-#include "ObjectBrowserStyle.h"
-#include "UI/ObjectBrowserTableItemTooltip.h"
+#include "UI/SObjectBrowserTableItemTooltip.h"
 
 #define LOCTEXT_NAMESPACE "ObjectBrowser"
 
-FObjectTreeCategoryItem::FObjectTreeCategoryItem(TSharedRef<FObjectModel> InModel, TSharedRef<FObjectCategory> InCategory)
-	: Data(InCategory)
-{
-	Model = InModel;
-}
 
-TArray<UObject*> FObjectTreeCategoryItem::Select(UWorld* InContext) const
-{
-	TArray<UObject*> Result;
-	Data->Select(InContext,Result);
-	return Result;
-}
-
-void FObjectTreeCategoryItem::GenerateTooltip(FObjectBrowserTableItemTooltipBuilder& TooltipBuilder) const
-{
-	TArray<SubsystemTreeItemPtr> Subsystems;
-	Model->GetAllObjectsInCategory(SharedThis(this), Subsystems);
-	TooltipBuilder.AddPrimary(LOCTEXT("SubsystemTooltipItem_NumSub", "Num Objects"), FText::AsNumber(Subsystems.Num()));
-}
-
-FObjectTreeSubsystemItem::FObjectTreeSubsystemItem()
+FObjectTreeObjectItem::FObjectTreeObjectItem()
 {
 }
 
-FObjectTreeSubsystemItem::FObjectTreeSubsystemItem(TSharedRef<FObjectModel> InModel, TSharedPtr<ISubsystemTreeItem> InParent, UObject* Instance)
+FObjectTreeObjectItem::FObjectTreeObjectItem(TSharedRef<FObjectModel> InModel, TSharedPtr<IObjectTreeItem> InParent, UObject* Instance)
 {
 	Model = InModel;
 	Parent = InParent;
 
 	check(Instance);
-	Subsystem = Instance;
+	Object = Instance;
 
 	UClass* const InClass = Instance->GetClass();
 	Class = InClass;
@@ -68,13 +47,13 @@ FObjectTreeSubsystemItem::FObjectTreeSubsystemItem(TSharedRef<FObjectModel> InMo
 
 	FObjectBrowserUtils::CollectSourceFiles(InClass, SourceFilePaths);
 
-	if (FObjectBrowserModule::OnGetSubsystemOwnerName.IsBound())
+	if (FObjectBrowserModule::OnGetObjectOwnerName.IsBound())
 	{
-		OwnerName = FObjectBrowserModule::OnGetSubsystemOwnerName.Execute(Instance);
+		OwnerName = FObjectBrowserModule::OnGetObjectOwnerName.Execute(Instance);
 	}
 	else
 	{
-		OwnerName = FObjectBrowserUtils::GetDefaultSubsystemOwnerName(Instance);
+		OwnerName = FObjectBrowserUtils::GetDefaultObjectOwnerName(Instance);
 	}
 
 	TSharedPtr<IPlugin> Plugin = FObjectBrowserUtils::GetPluginForClass(InClass);
@@ -82,56 +61,51 @@ FObjectTreeSubsystemItem::FObjectTreeSubsystemItem(TSharedRef<FObjectModel> InMo
 	{
 		bIsPluginClass = true;
 		PluginName = Plugin->GetName();
-#if UE_VERSION_OLDER_THAN(4, 26, 0)
-		PluginDisplayName = Plugin->GetName();
-#else
 		PluginDisplayName = Plugin->GetFriendlyName();
-#endif
 	}
 
 	PropertyStats = FObjectBrowserUtils::GetClassFieldStats(InClass);
 }
 
-bool FObjectTreeSubsystemItem::IsSelected() const
+bool FObjectTreeObjectItem::IsSelected() const
 {
 	return Model.IsValid() && Model->IsItemSelected(SharedThis(this));
 }
 
-FText FObjectTreeSubsystemItem::GetDisplayName() const
+FText FObjectTreeObjectItem::GetDisplayName() const
 {
 	return DisplayName;
 }
 
-void FObjectTreeSubsystemItem::GenerateTooltip(FObjectBrowserTableItemTooltipBuilder& TooltipBuilder) const
+void FObjectTreeObjectItem::GenerateTooltip(FObjectBrowserTableItemTooltipBuilder& TooltipBuilder) const
 {
-	//TooltipBuilder.AddPrimary(LOCTEXT("SubsystemTooltipItem_Path", "Path"), FText::FromString(LongPackage));
-	TooltipBuilder.AddPrimary(LOCTEXT("SubsystemTooltipItem_Class", "Class"), FText::FromName(ClassName));
-	TooltipBuilder.AddPrimary(LOCTEXT("SubsystemTooltipItem_Module", "Module"), FText::FromString(ShortPackage));
+	//TooltipBuilder.AddPrimary(LOCTEXT("ObjectTooltipItem_Path", "Path"), FText::FromString(LongPackage));
+	TooltipBuilder.AddPrimary(LOCTEXT("ObjectTooltipItem_Class", "Class"), FText::FromName(ClassName));
+	TooltipBuilder.AddPrimary(LOCTEXT("ObjectTooltipItem_Module", "Module"), FText::FromString(ShortPackage));
 	if (IsPluginModule())
 	{
-		TooltipBuilder.AddPrimary(LOCTEXT("SubsystemTooltipItem_Plugin", "Plugin"), FText::FromString(PluginDisplayName));
+		TooltipBuilder.AddPrimary(LOCTEXT("ObjectTooltipItem_Plugin", "Plugin"), FText::FromString(PluginDisplayName));
 	}
 	if (IsConfigExportable())
 	{
-		TooltipBuilder.AddPrimary(LOCTEXT("SubsystemTooltipItem_Config", "Config"), FText::FromName(ConfigName));
+		TooltipBuilder.AddPrimary(LOCTEXT("ObjectTooltipItem_Config", "Config"), FText::FromName(ConfigName));
 	}
 	if (!OwnerName.IsEmpty())
 	{
-		TooltipBuilder.AddPrimary(LOCTEXT("SubsystemTooltipItem_Owner", "Owned by"), FText::FromString(OwnerName));
+		TooltipBuilder.AddPrimary(LOCTEXT("ObjectTooltipItem_Owner", "Owned by"), FText::FromString(OwnerName));
 	}
 
-	TooltipBuilder.AddPrimary(LOCTEXT("SubsystemTooltipItem_Props", "Num Properties"), FText::AsNumber(PropertyStats.NumProperties));
-	TooltipBuilder.AddPrimary(LOCTEXT("SubsystemTooltipItem_PropsEditable", "Num Editable Properties"), FText::AsNumber(PropertyStats.NumEditable));
-	TooltipBuilder.AddPrimary(LOCTEXT("SubsystemTooltipItem_PropsConfig", "Num Config Properties"), FText::AsNumber(PropertyStats.NumConfig));
-
+	TooltipBuilder.AddPrimary(LOCTEXT("ObjectTooltipItem_Props", "Num Properties"), FText::AsNumber(PropertyStats.NumProperties));
+	TooltipBuilder.AddPrimary(LOCTEXT("ObjectTooltipItem_PropsEditable", "Num Editable Properties"), FText::AsNumber(PropertyStats.NumEditable));
+	TooltipBuilder.AddPrimary(LOCTEXT("ObjectTooltipItem_PropsConfig", "Num Config Properties"), FText::AsNumber(PropertyStats.NumConfig));
 }
 
-void FObjectTreeSubsystemItem::GenerateContextMenu(UToolMenu* MenuBuilder) const
+void FObjectTreeObjectItem::GenerateContextMenu(UToolMenu* MenuBuilder) const
 {
-	TWeakPtr<const FObjectTreeSubsystemItem> Self = SharedThis(this);
+	TWeakPtr<const FObjectTreeObjectItem> Self = SharedThis(this);
 
 	{
-		FToolMenuSection& Section = MenuBuilder->AddSection("SubsystemContextActions", LOCTEXT("SubsystemContextActions", "Common"));
+		FToolMenuSection& Section = MenuBuilder->AddSection("ObjectContextActions", LOCTEXT("ObjectContextActions", "Common"));
 		Section.AddMenuEntry("OpenSourceFile",
 			LOCTEXT("OpenSourceFile", "Open Source File"),
 			FText::GetEmpty(),
@@ -157,7 +131,7 @@ void FObjectTreeSubsystemItem::GenerateContextMenu(UToolMenu* MenuBuilder) const
 	}
 
 	{
-		FToolMenuSection& Section = MenuBuilder->AddSection("SubsystemReferenceActions", LOCTEXT("SubsystemReferenceActions", "References"));
+		FToolMenuSection& Section = MenuBuilder->AddSection("ObjectReferenceActions", LOCTEXT("ObjectReferenceActions", "References"));
 		Section.AddMenuEntry("CopyClassName",
 			LOCTEXT("CopyClassName", "Copy Class Name"),
 			FText::GetEmpty(),
@@ -234,7 +208,7 @@ void FObjectTreeSubsystemItem::GenerateContextMenu(UToolMenu* MenuBuilder) const
 
 	if (IsConfigExportable())
 	{
-		FToolMenuSection& Section = MenuBuilder->AddSection("SubsystemConfigActions", LOCTEXT("SubsystemConfigActions", "Config"));
+		FToolMenuSection& Section = MenuBuilder->AddSection("ObjectConfigActions", LOCTEXT("ObjectConfigActions", "Config"));
 
 		Section.AddMenuEntry("ExportToDefaults",
 			LOCTEXT("ExportToDefaults", "Export Default Config"),
@@ -255,7 +229,7 @@ void FObjectTreeSubsystemItem::GenerateContextMenu(UToolMenu* MenuBuilder) const
 						}
 					}
 				}),
-				FCanExecuteAction::CreateSP(this, &FObjectTreeSubsystemItem::IsDefaultConfig)
+				FCanExecuteAction::CreateSP(this, &FObjectTreeObjectItem::IsDefaultConfig)
 			)
 		);
 		Section.AddMenuEntry("ExportModified",
@@ -272,7 +246,7 @@ void FObjectTreeSubsystemItem::GenerateContextMenu(UToolMenu* MenuBuilder) const
 						FObjectBrowserUtils::ShowBrowserInfoMessage(LOCTEXT("ObjectBrowser", "Copied to clipboard"), SNotificationItem::CS_Success);
 					}
 				}),
-				FCanExecuteAction::CreateSP(this, &FObjectTreeSubsystemItem::IsConfigExportable)
+				FCanExecuteAction::CreateSP(this, &FObjectTreeObjectItem::IsConfigExportable)
 			)
 		);
 		Section.AddMenuEntry("ExportAll",
@@ -289,7 +263,7 @@ void FObjectTreeSubsystemItem::GenerateContextMenu(UToolMenu* MenuBuilder) const
 						FObjectBrowserUtils::ShowBrowserInfoMessage(LOCTEXT("ObjectBrowser", "Copied to clipboard"), SNotificationItem::CS_Success);
 					}
 				}),
-				FCanExecuteAction::CreateSP(this, &FObjectTreeSubsystemItem::IsConfigExportable)
+				FCanExecuteAction::CreateSP(this, &FObjectTreeObjectItem::IsConfigExportable)
 			)
 		);
 	}

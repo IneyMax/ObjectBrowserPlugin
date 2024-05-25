@@ -2,12 +2,14 @@
 
 #pragma once
 
-#include "UI/ObjectBrowserTableItem.h"
+#include "UI/SObjectBrowserTableItem.h"
 #include "Widgets/SToolTip.h"
+
 
 class SObjectBrowserTableItemTooltip : public SToolTip
 {
 	using Super = SToolTip;
+
 public:
 	SLATE_BEGIN_ARGS(SObjectBrowserTableItemTooltip)
 	    { }
@@ -32,6 +34,7 @@ public:
 private:
 	TWeakPtr<SObjectBrowserTableItem> ObjectBrowserTableItem;
 };
+
 
 class OBJECTBROWSERPLUGIN_API FObjectBrowserTableItemTooltipBuilder
 {

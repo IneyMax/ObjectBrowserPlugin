@@ -6,8 +6,10 @@
 #include "Widgets/SCompoundWidget.h"
 #include "Model/ObjectBrowserModel.h"
 
+struct FObjectTreeObjectItem;
 class SObjectTreeWidget;
 class IDetailsView;
+
 
 /**
  * Object Browser tab content widget
@@ -29,7 +31,7 @@ public:
 	TSharedRef<SWidget> MakeFilterMenu();
 	void AddBoolFilter(FMenuBuilder& MenuBuilder, FText Text, FText InToolTip, bool* BoolOption);
 	void Construct(const FArguments& InArgs);
-	bool IsItemSelected(SubsystemTreeItemPtr Item);
+	bool IsItemSelected(ObjectTreeItemPtr Item);
 
 protected:
 	virtual void Tick( const FGeometry& AllotedGeometry, const double InCurrentTime, const float InDeltaTime ) override;
@@ -45,7 +47,7 @@ protected:
 
 	// Search bar
 
-	void TransformItemToString(const ISubsystemTreeItem& Level, TArray<FString>& OutSearchStrings) const;
+	void TransformItemToString(const IObjectTreeItem& Level, TArray<FString>& OutSearchStrings) const;
 	void SetFilterText(const FText& InFilterText);
 	FText GetSearchBoxText() const;
 	FText GetFilterStatusText() const;
@@ -65,15 +67,15 @@ protected:
 
 	// Tree view
 	void SetupColumns(SHeaderRow& HeaderRow);
-	TSharedRef<class ITableRow> GenerateTreeRow(SubsystemTreeItemPtr Item, const TSharedRef<STableViewBase>& OwnerTable);
-	void GetChildrenForTree(SubsystemTreeItemPtr Item, TArray<SubsystemTreeItemPtr>& OutChildren);
-	void OnExpansionChanged(SubsystemTreeItemPtr Item, bool bIsItemExpanded);
-	void OnSelectionChanged(const SubsystemTreeItemPtr Item, ESelectInfo::Type SelectInfo);
-	void OnTreeViewMouseButtonDoubleClick(SubsystemTreeItemPtr Item);
+	TSharedRef<class ITableRow> GenerateTreeRow(ObjectTreeItemPtr Item, const TSharedRef<STableViewBase>& OwnerTable);
+	void GetChildrenForTree(ObjectTreeItemPtr Item, TArray<ObjectTreeItemPtr>& OutChildren);
+	void OnExpansionChanged(ObjectTreeItemPtr Item, bool bIsItemExpanded);
+	void OnSelectionChanged(const ObjectTreeItemPtr Item, ESelectInfo::Type SelectInfo);
+	void OnTreeViewMouseButtonDoubleClick(ObjectTreeItemPtr Item);
 
 	EColumnSortMode::Type GetColumnSortMode(FName ColumnId) const;
 	void OnColumnSortModeChanged( const EColumnSortPriority::Type SortPriority, const FName& ColumnId, const EColumnSortMode::Type InSortMode );
-	void SortItems(TArray<SubsystemTreeItemPtr>& Items) const;
+	void SortItems(TArray<ObjectTreeItemPtr>& Items) const;
 
 	void ToggleDisplayColumn(FName ColumnName);
 	void ToggleTableColoring();
@@ -89,8 +91,8 @@ protected:
 	TMap<FObjectTreeItemID, bool> GetParentsExpansionState() const;
 	void SetParentsExpansionState(const TMap<FObjectTreeItemID, bool>& ExpansionInfo);
 
-	SubsystemTreeItemPtr GetFirstSelectedItem() const;
-	const FObjectTreeSubsystemItem* GetFirstSelectedSubsystem() const;
+	ObjectTreeItemPtr GetFirstSelectedItem() const;
+	const FObjectTreeObjectItem* GetFirstSelectedObject() const;
 	FObjectTreeItemID GetFirstSelectedItemId() const;
 
 	// World picker
@@ -109,7 +111,7 @@ protected:
 
 	TSharedRef<IDetailsView> CreateDetails();
 	void RecreateDetails();
-	void SetSelectedObject(SubsystemTreeItemPtr Item);
+	void SetSelectedObject(ObjectTreeItemPtr Item);
 	void ResetSelectedObject();
 
 	bool IsDetailsPropertyEditingEnabled();
@@ -118,8 +120,8 @@ protected:
 
 	// Item context menu
 
-	TSharedPtr<SWidget> ConstructSubsystemContextMenu();
-	bool HasSelectedSubsystem() const;
+	TSharedPtr<SWidget> ConstructObjectContextMenu();
+	bool HasSelectedObject() const;
 
 	// Settings
 
@@ -128,10 +130,10 @@ protected:
 	// Data tracking
 
 	void OnModulesChanged(FName ModuleThatChanged, EModuleChangeReason ReasonForChange);
-	void OnSubsystemDataChanged(TSharedRef<ISubsystemTreeItem> Item);
+	void OnObjectDataChanged(TSharedRef<IObjectTreeItem> Item);
 
 private:
-	TSharedPtr<FObjectModel> SubsystemModel;
+	TSharedPtr<FObjectModel> ObjectModel;
 
 	TSharedPtr<IDetailsView>	DetailsView;
 	TSharedPtr<SVerticalBox>	DetailsViewBox;
@@ -139,19 +141,19 @@ private:
 
 	TSharedPtr<SComboButton>    ViewOptionsComboButton;
 
-	TSharedPtr<ObjectTextFilter> SearchBoxSubsystemFilter;
+	TSharedPtr<ObjectTextFilter> SearchBoxObjectFilter;
 	TSharedPtr<ObjectCategoryFilter> CategoryFilter;
-	int32 FilteredSubsystemsCount = 0;
+	int32 FilteredObjectsCount = 0;
 
 	TSharedPtr<SObjectHeaderRow> HeaderRowWidget;
 
 	TArray<ObjectColumnPtr> DynamicColumnSlots;
 
 	/** Root items for the tree widget */
-	TArray<SubsystemTreeItemPtr> RootTreeItems;
+	TArray<ObjectTreeItemPtr> RootTreeItems;
 
 	/** All items that are currently displayed in the tree widget */
-	TMap<FObjectTreeItemID, SubsystemTreeItemPtr> TreeItemMap;
+	TMap<FObjectTreeItemID, ObjectTreeItemPtr> TreeItemMap;
 
 	TSharedPtr<SObjectTreeWidget> TreeWidget;
 

@@ -2,40 +2,14 @@
 
 #include "Model/ObjectBrowserModel.h"
 
+#include "ObjectBrowserFilters.h"
 #include "ObjectBrowserModule.h"
 #include "ObjectBrowserSettings.h"
+#include "ObjectBrowserUtils.h"
+#include "Item/ObjectTreeCategoryItem.h"
+#include "Item/ObjectTreeObjectItem.h"
 
 #define LOCTEXT_NAMESPACE "ObjectBrowser"
-
-ObjectCategoryFilter::ObjectCategoryFilter()
-{
-	// load initial state from config
-	UObjectBrowserSettings::Get()->LoadCategoryStates(FilterState);
-}
-
-bool ObjectCategoryFilter::PassesFilter(const ISubsystemTreeItem& InItem) const
-{
-	return IsCategoryVisible(InItem.GetID());
-}
-
-void ObjectCategoryFilter::ShowCategory(FObjectTreeItemID InCategory)
-{
-	FilterState.Add(InCategory, true);
-	UObjectBrowserSettings::Get()->SetCategoryState(InCategory, true);
-	OnChangedInternal.Broadcast();
-}
-
-void ObjectCategoryFilter::HideCategory(FObjectTreeItemID InCategory)
-{
-	FilterState.Add(InCategory, false);
-	UObjectBrowserSettings::Get()->SetCategoryState(InCategory, false);
-	OnChangedInternal.Broadcast();
-}
-
-bool ObjectCategoryFilter::IsCategoryVisible(FObjectTreeItemID InCategory) const
-{
-	return !FilterState.Contains(InCategory) ? true : FilterState.FindChecked(InCategory);
-}
 
 FObjectModel::FObjectModel()
 {
@@ -57,7 +31,7 @@ void FObjectModel::SetCurrentWorld(TWeakObjectPtr<UWorld> InWorld)
 	PopulateObjects();
 }
 
-bool FObjectModel::IsSubsystemFilterActive() const
+bool FObjectModel::IsObjectFilterActive() const
 {
 	return ObjectTextFilter.IsValid() && ObjectTextFilter->HasText();
 }
@@ -67,16 +41,16 @@ int32 FObjectModel::GetNumCategories() const
 	return AllCategories.Num();
 }
 
-const TArray<SubsystemTreeItemPtr>& FObjectModel::GetAllCategories() const
+const TArray<ObjectTreeItemPtr>& FObjectModel::GetAllCategories() const
 {
 	return AllCategories;
 }
 
-void FObjectModel::GetFilteredCategories(TArray<SubsystemTreeItemPtr>& OutCategories) const
+void FObjectModel::GetFilteredCategories(TArray<ObjectTreeItemPtr>& OutCategories) const
 {
 	OutCategories.Empty();
 
-	for (const SubsystemTreeItemPtr& Item : GetAllCategories())
+	for (const ObjectTreeItemPtr& Item : GetAllCategories())
 	{
 		check(Item->GetAsCategoryDescriptor());
 		if (!CategoryFilter.IsValid() || CategoryFilter->PassesFilter(*Item))
@@ -86,26 +60,26 @@ void FObjectModel::GetFilteredCategories(TArray<SubsystemTreeItemPtr>& OutCatego
 	}
 }
 
-const TArray<SubsystemTreeItemPtr>& FObjectModel::GetAllObjects() const
+const TArray<ObjectTreeItemPtr>& FObjectModel::GetAllObjects() const
 {
 	return AllObjects;
 }
 
-void FObjectModel::GetAllObjectsInCategory(SubsystemTreeItemConstPtr Category, TArray<SubsystemTreeItemPtr>& OutChildren) const
+void FObjectModel::GetAllObjectsInCategory(ObjectTreeItemConstPtr Category, TArray<ObjectTreeItemPtr>& OutChildren) const
 {
 	check(Category->GetAsCategoryDescriptor());
 
 	OutChildren.Empty();
 	if (AllObjectsByCategory.Contains(Category->GetID()))
 	{
-		for (const SubsystemTreeItemPtr& Item : AllObjectsByCategory.FindChecked(Category->GetID()))
+		for (const ObjectTreeItemPtr& Item : AllObjectsByCategory.FindChecked(Category->GetID()))
 		{
 			OutChildren.Add(Item);
 		}
 	}
 }
 
-void FObjectModel::GetFilteredSubsystems(SubsystemTreeItemConstPtr Category, TArray<SubsystemTreeItemPtr>& OutChildren) const
+void FObjectModel::GetFilteredObjects(ObjectTreeItemConstPtr Category, TArray<ObjectTreeItemPtr>& OutChildren) const
 {
 	FObjectTreeCategoryItem* AsCategory = Category->GetAsCategoryDescriptor();
 	check(AsCategory);
@@ -116,7 +90,7 @@ void FObjectModel::GetFilteredSubsystems(SubsystemTreeItemConstPtr Category, TAr
 
 	if (AllObjectsByCategory.Contains(AsCategory->GetID()))
 	{
-		for (const SubsystemTreeItemPtr& Item : AllObjectsByCategory.FindChecked(AsCategory->GetID()))
+		for (const ObjectTreeItemPtr& Item : AllObjectsByCategory.FindChecked(AsCategory->GetID()))
 		{
 			if (Settings->ShouldShowOnlyGame() && !Item->IsGameModule())
 				continue;
@@ -132,20 +106,20 @@ void FObjectModel::GetFilteredSubsystems(SubsystemTreeItemConstPtr Category, TAr
 }
 
 
-int32 FObjectModel::GetNumSubsystemsFromVisibleCategories() const
+int32 FObjectModel::GetNumObjectsFromVisibleCategories() const
 {
 	int32 Count = 0;
 
-	TArray<SubsystemTreeItemPtr> VisibleCategories;
+	TArray<ObjectTreeItemPtr> VisibleCategories;
 	GetFilteredCategories(VisibleCategories);
 
-	TArray<SubsystemTreeItemPtr> Subsystems;
+	TArray<ObjectTreeItemPtr> Objects;
 
-	for (const SubsystemTreeItemPtr& Category : VisibleCategories)
+	for (const ObjectTreeItemPtr& Category : VisibleCategories)
 	{
-		GetAllObjectsInCategory(Category, Subsystems);
+		GetAllObjectsInCategory(Category, Objects);
 
-		Count += Subsystems.Num();
+		Count += Objects.Num();
 	}
 
 	return Count;
@@ -164,12 +138,12 @@ bool FObjectModel::ShouldShowColumn(ObjectColumnPtr Column) const
 	return UObjectBrowserSettings::Get()->GetTableColumnState(Column->Name);
 }
 
-bool FObjectModel::IsItemSelected(TSharedRef<const ISubsystemTreeItem> Item)
+bool FObjectModel::IsItemSelected(TSharedRef<const IObjectTreeItem> Item)
 {
 	return LastSelectedItem == Item;
 }
 
-void FObjectModel::NotifySelected(TSharedPtr<ISubsystemTreeItem> Item)
+void FObjectModel::NotifySelected(TSharedPtr<IObjectTreeItem> Item)
 {
 	if (Item.IsValid())
 	{
@@ -194,7 +168,7 @@ TArray<ObjectColumnPtr> FObjectModel::GetSelectedTableColumns() const
 		}
 	}
 
-	Result.StableSort(SubsystemColumnSorter());
+	Result.StableSort(ObjectColumnSorter());
 	return Result;
 }
 
@@ -202,7 +176,7 @@ TArray<ObjectColumnPtr> FObjectModel::GetDynamicTableColumns() const
 {
 	TArray<ObjectColumnPtr> Result;
 	Result.Append(FObjectBrowserModule::Get().GetDynamicColumns());
-	Result.StableSort(SubsystemColumnSorter());
+	Result.StableSort(ObjectColumnSorter());
 	return Result;
 }
 
@@ -224,7 +198,7 @@ ObjectColumnPtr FObjectModel::FindTableColumn(const FName& ColumnName) const
 
 void FObjectModel::EmptyModel()
 {
-	for (const SubsystemTreeItemPtr& Category : AllCategories)
+	for (const ObjectTreeItemPtr& Category : AllCategories)
 	{
 		Category->RemoveAllChildren();
 	}
@@ -239,15 +213,15 @@ void FObjectModel::EmptyModel()
 void FObjectModel::PopulateCategories()
 {
 	FObjectBrowserModule& BrowserModule = FObjectBrowserModule::Get();
-	for (auto& SubsystemCategory : BrowserModule.GetCategories())
+	for (auto& ObjectCategory : BrowserModule.GetCategories())
 	{
-		auto Category = MakeShared<FObjectTreeCategoryItem>(SharedThis(this), SubsystemCategory.ToSharedRef());
+		auto Category = MakeShared<FObjectTreeCategoryItem>(SharedThis(this), ObjectCategory.ToSharedRef());
 
 		AllCategories.Add(MoveTemp(Category));
 	}
 
 	// sort categories after populating them
-	AllCategories.StableSort(SubsystemCategorySorter());
+	AllCategories.StableSort(ObjectCategorySorter());
 }
 
 void FObjectModel::PopulateObjects()
@@ -263,10 +237,10 @@ void FObjectModel::PopulateObjects()
 
 		for (UObject* Impl : AsCategory->Select(LocalWorld))
 		{
-			auto Descriptor = MakeShared<FObjectTreeSubsystemItem>(SharedThis(this), Category, Impl);
+			auto TreeObjectItem = MakeShared<FObjectTreeObjectItem>(SharedThis(this), Category, Impl);
 
-			AllObjects.Add(Descriptor);
-			AllObjectsByCategory.FindOrAdd(AsCategory->GetID()).Add(Descriptor);
+			AllObjects.Add(TreeObjectItem);
+			AllObjectsByCategory.FindOrAdd(AsCategory->GetID()).Add(TreeObjectItem);
 		}
 	}
 }

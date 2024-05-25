@@ -28,7 +28,6 @@ public class ObjectBrowserPlugin : ModuleRules
 				"InputCore",
 				"UnrealEd",
 				"EditorStyle",
-				"EditorSubsystem",
 				"WorkspaceMenuStructure",
 				"WorldBrowser",
 				"LevelEditor",

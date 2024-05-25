@@ -2,9 +2,11 @@
 
 #include "Model/Column/ObjectBrowserColumn_Plugin.h"
 
-#include "UI/ObjectBrowserTableItem.h"
+#include "Item/IObjectTreeItem.h"
+#include "Item/ObjectTreeObjectItem.h"
 
 #define LOCTEXT_NAMESPACE "ObjectBrowser"
+
 
 FObjectDynamicColumn_Plugin::FObjectDynamicColumn_Plugin()
 {
@@ -14,21 +16,21 @@ FObjectDynamicColumn_Plugin::FObjectDynamicColumn_Plugin()
 	PreferredWidthRatio = 0.25f;
 }
 
-FText FObjectDynamicColumn_Plugin::ExtractText(TSharedRef<const ISubsystemTreeItem> Item) const
+FText FObjectDynamicColumn_Plugin::ExtractText(TSharedRef<const IObjectTreeItem> Item) const
 {
-	if (const FObjectTreeSubsystemItem* SubsystemItem = Item->GetAsSubsystemDescriptor())
+	if (const FObjectTreeObjectItem* ObjectItem = Item->GetAsObjectDescriptor())
 	{
-		return FText::FromString(SubsystemItem->PluginDisplayName);
+		return FText::FromString(ObjectItem->PluginDisplayName);
 	}
 
 	return FText::GetEmpty();
 }
 
-void FObjectDynamicColumn_Plugin::PopulateSearchStrings(const ISubsystemTreeItem& Item, TArray<FString>& OutSearchStrings) const
+void FObjectDynamicColumn_Plugin::PopulateSearchStrings(const IObjectTreeItem& Item, TArray<FString>& OutSearchStrings) const
 {
-	if (const FObjectTreeSubsystemItem* SubsystemItem = Item.GetAsSubsystemDescriptor())
+	if (const FObjectTreeObjectItem* ObjectItem = Item.GetAsObjectDescriptor())
 	{
-		OutSearchStrings.Add(SubsystemItem->PluginDisplayName);
+		OutSearchStrings.Add(ObjectItem->PluginDisplayName);
 	}
 }
 

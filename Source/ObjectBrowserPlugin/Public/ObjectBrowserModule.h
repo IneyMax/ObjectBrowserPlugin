@@ -3,19 +3,16 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Model/ObjectBrowserColumn.h"
 #include "Modules/ModuleInterface.h"
-#include "Model/ObjectBrowserCategory.h" // [no-fwd]
-#include "Model/ObjectBrowserColumn.h" // [no-fwd]
 
-class UObjectBrowserSettings;
-class UToolMenu;
-struct IObjectTreeItem;
 
 class FObjectBrowserModule : public IModuleInterface
 {
 public:
 	static const FName ObjectBrowserTabName;
 	static const FName ObjectBrowserContextMenuName;
+	
 public:
 	static FObjectBrowserModule& Get()
 	{
@@ -30,19 +27,18 @@ public:
 	 * Get list of all registered Object categories
 	 */
 	OBJECTBROWSERPLUGIN_API const TArray<ObjectCategoryPtr>& GetCategories() const;
+	
 	/**
-	 * Register default Object categories
-	 */
-	void RegisterDefaultCategories();
-	/**
-	 * Register a new Object category
+	 * Register a new category
 	 */
 	template<typename TCategory, typename... TArgs>
 	void RegisterCategory(TArgs&&... InArgs);
+	
 	/**
-	 * Register a new Object category to show
+	 * Register a new category to show
 	 */
-	OBJECTBROWSERPLUGIN_API void RegisterCategory(TSharedRef<FObjectCategory> InCategory);
+	OBJECTBROWSERPLUGIN_API void RegisterCategory(TSharedRef<FObjectCategoryBase> InCategory);
+	
 	/**
 	 * Remove a category by its name
 	 */
@@ -52,19 +48,18 @@ public:
 	 * Get a list of all custom dynamic columns
 	 */
 	const TArray<ObjectColumnPtr>& GetDynamicColumns() const;
-	/**
-	 *
-	 */
-	void RegisterDefaultDynamicColumns();
+	
 	/**
 	 * Register a new custom dynamic column
 	 */
 	template<typename TColumn, typename... TArgs>
 	void RegisterDynamicColumn(TArgs&&... InArgs);
+	
 	/**
 	 * Register a new custom dynamic column
 	 */
 	OBJECTBROWSERPLUGIN_API void RegisterDynamicColumn(TSharedRef<FObjectDynamicColumn> InColumn);
+	
 	/**
 	 * Populate permanent columns
 	 */
@@ -76,28 +71,28 @@ public:
 	void SummonPluginSettingsTab();
 
 	/**
-	 * Open subsystems tab
+	 * Open objects tab
 	 */
-	void SummonSubsystemTab();
+	void SummonObjectTab();
 
 	/**
-	 * Callback that is called whenever an owner name is needed to be obtained for the subsystem
+	 * Callback that is called whenever an owner name is needed to be obtained for the object
 	 */
-	DECLARE_DELEGATE_RetVal_OneParam(FString, FOnGetSubsystemOwnerName, UObject*);
-	static OBJECTBROWSERPLUGIN_API FOnGetSubsystemOwnerName OnGetSubsystemOwnerName;
+	DECLARE_DELEGATE_RetVal_OneParam(FString, FOnGetObjectOwnerName, UObject*);
+	static OBJECTBROWSERPLUGIN_API FOnGetObjectOwnerName OnGetObjectOwnerName;
 
 	/**
 	 * Callback that is called whenever a tooltip for item needs to be generated
 	 * Used to add custom data to tooltips.
 	 */
-	DECLARE_MULTICAST_DELEGATE_TwoParams(FOnGenerateTooltip, TSharedRef<const ISubsystemTreeItem>, class FObjectBrowserTableItemTooltipBuilder&);
+	DECLARE_MULTICAST_DELEGATE_TwoParams(FOnGenerateTooltip, TSharedRef<const IObjectTreeItem>, class FObjectBrowserTableItemTooltipBuilder&);
 	static OBJECTBROWSERPLUGIN_API FOnGenerateTooltip OnGenerateTooltip;
 
 	/**
 	 * Callback that is called whenever a menu for item needs to be generated.
 	 * Used to add custom menu actions.
 	 */
-	DECLARE_MULTICAST_DELEGATE_TwoParams(FOnGenerateMenu, TSharedRef<const ISubsystemTreeItem>, UToolMenu*);
+	DECLARE_MULTICAST_DELEGATE_TwoParams(FOnGenerateMenu, TSharedRef<const IObjectTreeItem>, UToolMenu*);
 	static OBJECTBROWSERPLUGIN_API FOnGenerateMenu OnGenerateContextMenu;
 
 private:
@@ -106,9 +101,11 @@ private:
 
 	// Saved instance of Settings section
 	TSharedPtr<class ISettingsSection> SettingsSection;
-	// Instances of subsystem categories
+	
+	// Instances of object categories
 	TArray<ObjectCategoryPtr> Categories;
-	// Instances of dynamic subsystem columns
+	
+	// Instances of dynamic object columns
 	TArray<ObjectColumnPtr> DynamicColumns;
 };
 

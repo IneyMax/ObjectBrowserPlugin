@@ -2,9 +2,11 @@
 
 #include "Model/Column/ObjectBrowserColumn_Name.h"
 
-#include "UI/ObjectBrowserTableItem.h"
+#include "Item/IObjectTreeItem.h"
+#include "UI/SObjectBrowserTableItem.h"
 
 #define LOCTEXT_NAMESPACE "ObjectBrowser"
+
 
 FObjectDynamicColumn_Name::FObjectDynamicColumn_Name()
 {
@@ -15,7 +17,7 @@ FObjectDynamicColumn_Name::FObjectDynamicColumn_Name()
 	PreferredWidthRatio = 0.6f;
 }
 
-TSharedPtr<SWidget> FObjectDynamicColumn_Name::GenerateColumnWidget(TSharedRef<const ISubsystemTreeItem> Item, TSharedRef<SObjectBrowserTableItem> TableRow) const
+TSharedPtr<SWidget> FObjectDynamicColumn_Name::GenerateColumnWidget(TSharedRef<const IObjectTreeItem> Item, TSharedRef<SObjectBrowserTableItem> TableRow) const
 {
 	return SNew(SHorizontalBox)
 			+SHorizontalBox::Slot()
@@ -53,15 +55,15 @@ TSharedPtr<SWidget> FObjectDynamicColumn_Name::GenerateColumnWidget(TSharedRef<c
 			];
 }
 
-FText FObjectDynamicColumn_Name::ExtractText(TSharedRef<const ISubsystemTreeItem> Item) const
+FText FObjectDynamicColumn_Name::ExtractText(TSharedRef<const IObjectTreeItem> Item) const
 {
 	FFormatNamedArguments Args;
 	Args.Add(TEXT("DisplayText"), Item->GetDisplayName());
-	Args.Add(TEXT("Stale"), (Item->IsStale() ? LOCTEXT("SubsystemItem_Stale", " (Stale)") : FText::GetEmpty()));
-	return FText::Format(LOCTEXT("SubsystemItem_Name", "{DisplayText}{Stale}"), Args);
+	Args.Add(TEXT("Stale"), (Item->IsStale() ? LOCTEXT("ObjectItem_Stale", " (Stale)") : FText::GetEmpty()));
+	return FText::Format(LOCTEXT("ObjectItem_Name", "{DisplayText}{Stale}"), Args);
 }
 
-FSlateColor FObjectDynamicColumn_Name::ExtractColor(TSharedRef<const ISubsystemTreeItem> Item) const
+FSlateColor FObjectDynamicColumn_Name::ExtractColor(TSharedRef<const IObjectTreeItem> Item) const
 {
 	if (Item->IsStale())
 	{
@@ -70,7 +72,7 @@ FSlateColor FObjectDynamicColumn_Name::ExtractColor(TSharedRef<const ISubsystemT
 	return Super::ExtractColor(Item);
 }
 
-void FObjectDynamicColumn_Name::PopulateSearchStrings(const ISubsystemTreeItem& Item, TArray<FString>& OutSearchStrings) const
+void FObjectDynamicColumn_Name::PopulateSearchStrings(const IObjectTreeItem& Item, TArray<FString>& OutSearchStrings) const
 {
 	OutSearchStrings.Add(Item.GetDisplayName().ToString());
 }

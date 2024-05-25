@@ -1,12 +1,14 @@
 
 
-#include "UI/ObjectBrowserTableItem.h"
+#include "UI/SObjectBrowserTableItem.h"
 #include "Model/ObjectBrowserModel.h"
-#include "UI/ObjectBrowserTableItemTooltip.h"
+#include "UI/SObjectBrowserTableItemTooltip.h"
 #include "SlateOptMacros.h"
 #include "ObjectBrowserFlags.h"
 #include "ObjectBrowserSettings.h"
 #include "ObjectBrowserStyle.h"
+#include "Item/IObjectTreeItem.h"
+#include "Model/ObjectBrowserColumn.h"
 
 #define LOCTEXT_NAMESPACE "ObjectBrowser"
 

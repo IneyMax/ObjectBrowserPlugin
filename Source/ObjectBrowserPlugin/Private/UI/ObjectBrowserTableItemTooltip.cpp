@@ -1,9 +1,10 @@
 ﻿
 
-#include "UI/ObjectBrowserTableItemTooltip.h"
+#include "UI/SObjectBrowserTableItemTooltip.h"
 #include "ObjectBrowserFlags.h"
 #include "ObjectBrowserModule.h"
 #include "ObjectBrowserStyle.h"
+#include "Item/IObjectTreeItem.h"
 
 #define LOCTEXT_NAMESPACE "ObjectBrowser"
 
@@ -152,7 +153,7 @@ void FObjectBrowserTableItemTooltipBuilder::AddBox(TSharedRef<SVerticalBox> Targ
 		  .AutoWidth()
 		  .Padding(0, 0, 4, 0)
 		[
-			SNew(STextBlock).Text(FText::Format(LOCTEXT("SubsystemItemTooltipFormat", "{0}:"), Key))
+			SNew(STextBlock).Text(FText::Format(LOCTEXT("ObjectItemTooltipFormat", "{0}:"), Key))
 							.ColorAndOpacity( bImportant ? ImportantStyle.GetSubduedForegroundColor() : FSlateColor::UseSubduedForeground())
 		]
 

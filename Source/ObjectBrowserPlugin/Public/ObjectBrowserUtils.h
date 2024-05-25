@@ -3,17 +3,37 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ObjectBrowserFwd.h"
+#include "ObjectBrowserTypes.h"
+#include "Item/IObjectTreeItem.h"
+#include "Model/ObjectBrowserColumn.h"
 #include "Widgets/Notifications/SNotificationList.h"
 
-/**
- * Collection of various helpers to use
- */
+
+struct OBJECTBROWSERPLUGIN_API ObjectCategorySorter
+{
+	bool operator()(const ObjectTreeItemPtr& A, const ObjectTreeItemPtr& B) const
+	{
+		return A->GetSortOrder() < B->GetSortOrder();
+	}
+};
+
+
+struct OBJECTBROWSERPLUGIN_API ObjectColumnSorter
+{
+	bool operator()(const ObjectColumnPtr& A, const ObjectColumnPtr& B) const
+	{
+		return A->SortOrder < B->SortOrder;
+	}
+};
+
+
 struct OBJECTBROWSERPLUGIN_API FObjectBrowserUtils
 {
 	/**
-	 * Get info about subsystem "Owner"
+	 * Get info about object "Owner"
 	 */
-	static FString GetDefaultSubsystemOwnerName(UObject* InObject);
+	static FString GetDefaultObjectOwnerName(UObject* InObject);
 
 	/**
 	 * Finds the base directory for a given module.
@@ -40,15 +60,6 @@ struct OBJECTBROWSERPLUGIN_API FObjectBrowserUtils
 	 */
 	static void CollectSourceFiles(UClass* InClass, TArray<FString>& OutSourceFiles);
 
-	struct FClassFieldStats
-	{
-		int32 NumProperties = 0;
-		int32 NumEditable = 0;
-		int32 NumVisible = 0;
-		int32 NumConfig = 0;
-		int32 NumCallable = 0;
-	};
-
 	/**
 	 * Collect property display info for tooltip
 	 */
@@ -72,7 +83,7 @@ struct OBJECTBROWSERPLUGIN_API FObjectBrowserUtils
 	 * @param bModifiedOnly
 	 * @return
 	 */
-	static FString GenerateConfigExport(const struct FObjectTreeSubsystemItem* Item, bool bModifiedOnly);
+	static FString GenerateConfigExport(const struct FObjectTreeObjectItem* Item, bool bModifiedOnly);
 
 	/**
 	 *
@@ -82,14 +93,14 @@ struct OBJECTBROWSERPLUGIN_API FObjectBrowserUtils
 	/**
 	 * Dump class flags to output
 	 *
-	 * Example: `SB.PrintClass /Script/ObjectBrowser.ObjectBrowserTestSubsystem`
+	 * Example: `SB.PrintClass /Script/ObjectBrowser.ObjectBrowserTestObject`
 	 */
 	static void PrintClassDetails(const TArray< FString >& InArgs, UWorld* InWorld, FOutputDevice& InLog);
 
 	/**
 	 * Dump property flags to output
 	 *
-	 * Example: `SB.PrintProperty /Script/ObjectBrowser.ObjectBrowserTestSubsystem SingleDelegate`
+	 * Example: `SB.PrintProperty /Script/ObjectBrowser.ObjectBrowserTestObject SingleDelegate`
 	 */
 	static void PrintPropertyDetails(const TArray< FString >& InArgs, UWorld* InWorld, FOutputDevice& InLog);
 };

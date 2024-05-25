@@ -17,10 +17,12 @@
 #include "EditorFontGlyphs.h"
 #include "Engine/MemberReference.h"
 #include "IDetailsView.h"
+#include "ObjectBrowserFilters.h"
+#include "Item/ObjectTreeCategoryItem.h"
 #include "Kismet2/SClassPickerDialog.h"
-#include "UI/ObjectBrowserTableHeader.h"
-#include "UI/ObjectBrowserTableItem.h"
-#include "UI/ObjectBrowserTreeWidget.h"
+#include "UI/SObjectBrowserTableHeader.h"
+#include "UI/SObjectBrowserTableItem.h"
+#include "UI/SObjectBrowserTreeWidget.h"
 
 #define LOCTEXT_NAMESPACE "ObjectBrowser"
 
@@ -79,26 +81,26 @@ void SObjectBrowser::Construct(const FArguments& InArgs)
 	UObjectBrowserSettings::OnSettingChanged().AddSP(this, &SObjectBrowser::OnSettingsChanged);
 	FModuleManager::Get().OnModulesChanged().AddSP(this, &SObjectBrowser::OnModulesChanged);
 
-	SubsystemModel = MakeShared<FObjectModel>();
-	SubsystemModel->SetCurrentWorld(InArgs._InWorld);
-	SubsystemModel->OnDataChanged.AddSP(this, &SObjectBrowser::OnSubsystemDataChanged);
+	ObjectModel = MakeShared<FObjectModel>();
+	ObjectModel->SetCurrentWorld(InArgs._InWorld);
+	ObjectModel->OnDataChanged.AddSP(this, &SObjectBrowser::OnObjectDataChanged);
 
 	// Generate search box
-	SearchBoxSubsystemFilter = MakeShared<ObjectTextFilter>(
+	SearchBoxObjectFilter = MakeShared<ObjectTextFilter>(
 		ObjectTextFilter::FItemToStringArray::CreateSP(this, &SObjectBrowser::TransformItemToString)
 	);
-	SearchBoxSubsystemFilter->OnChanged().AddSP(this, &SObjectBrowser::FullRefresh);
+	SearchBoxObjectFilter->OnChanged().AddSP(this, &SObjectBrowser::FullRefresh);
 
 	// Generate category selector
 	CategoryFilter = MakeShared<ObjectCategoryFilter>();
 	CategoryFilter->OnChanged().AddSP(this, &SObjectBrowser::FullRefresh);
 
 	// Assign filters to model
-	SubsystemModel->CategoryFilter = CategoryFilter;
-	SubsystemModel->ObjectTextFilter = SearchBoxSubsystemFilter;
+	ObjectModel->CategoryFilter = CategoryFilter;
+	ObjectModel->ObjectTextFilter = SearchBoxObjectFilter;
 
 	// Generate tree view header.
-	HeaderRowWidget = SNew(SObjectHeaderRow, SubsystemModel, SharedThis(this));
+	HeaderRowWidget = SNew(SObjectHeaderRow, ObjectModel, SharedThis(this));
 
 	// Build the details viewer
 	DetailsView = CreateDetails();
@@ -106,7 +108,7 @@ void SObjectBrowser::Construct(const FArguments& InArgs)
 
 	// Context menu
 
-	FOnContextMenuOpening ContextMenuEvent = FOnContextMenuOpening::CreateSP(this, &SObjectBrowser::ConstructSubsystemContextMenu);
+	FOnContextMenuOpening ContextMenuEvent = FOnContextMenuOpening::CreateSP(this, &SObjectBrowser::ConstructObjectContextMenu);
 
 	// Build the actual Object Browser view panel
 	ChildSlot
@@ -188,14 +190,14 @@ void SObjectBrowser::Construct(const FArguments& InArgs)
 				.FillWidth(1.0f)
 				[
 					SNew(SSearchBox)
-						.ToolTipText(LOCTEXT("FilterSearchToolTip", "Type here to search Subsystems"))
-						.HintText(LOCTEXT("FilterSearchHint", "Search Subsystems"))
+						.ToolTipText(LOCTEXT("FilterSearchToolTip", "Type here to search Objects"))
+						.HintText(LOCTEXT("FilterSearchHint", "Search Objects"))
 						.OnTextChanged(this, &SObjectBrowser::SetFilterText)
 				]
 			]
 		]
 
-		// Subsystems Content
+		// Objects Content
 		+SVerticalBox::Slot()
 		.FillHeight(1.f)
 		.Padding(0,4,0,0)
@@ -225,7 +227,7 @@ void SObjectBrowser::Construct(const FArguments& InArgs)
 					.FillHeight(1.f)
 					.Padding(0, 0, 0, 2)
 					[
-						SAssignNew(TreeWidget, SObjectTreeWidget, SubsystemModel, SharedThis(this))
+						SAssignNew(TreeWidget, SObjectTreeWidget, ObjectModel, SharedThis(this))
 							.TreeItemsSource(&RootTreeItems)
 							.SelectionMode(ESelectionMode::Single)
 							.OnGenerateRow(this, &SObjectBrowser::GenerateTreeRow)
@@ -370,21 +372,21 @@ void SObjectBrowser::Populate()
 
 	if (bFullRefresh)
 	{
-		FilteredSubsystemsCount = 0;
+		FilteredObjectsCount = 0;
 		EmptyTreeItems();
 		ResetSelectedObject();
 
-		SubsystemModel->GetFilteredCategories(RootTreeItems);
-		for (SubsystemTreeItemPtr Category : RootTreeItems)
+		ObjectModel->GetFilteredCategories(RootTreeItems);
+		for (ObjectTreeItemPtr Category : RootTreeItems)
 		{
 			TreeItemMap.Add(Category->GetID(), Category);
 
-			SubsystemModel->GetFilteredSubsystems(Category, Category->Children);
-			for (SubsystemTreeItemPtr  Child : Category->GetChildren())
+			ObjectModel->GetFilteredObjects(Category, Category->Children);
+			for (ObjectTreeItemPtr  Child : Category->GetChildren())
 			{
 				TreeItemMap.Add(Child->GetID(), Child);
 
-				FilteredSubsystemsCount ++;
+				FilteredObjectsCount ++;
 			}
 		}
 
@@ -393,7 +395,7 @@ void SObjectBrowser::Populate()
 
 	SetParentsExpansionState(ExpansionStateInfo);
 
-	if (SubsystemTreeItemPtr LastSelected = TreeItemMap.FindRef(SelectedItem))
+	if (ObjectTreeItemPtr LastSelected = TreeItemMap.FindRef(SelectedItem))
 	{
 		SetSelectedObject(LastSelected);
 	}
@@ -431,11 +433,11 @@ void SObjectBrowser::FullRefresh()
 	RequestSort();
 }
 
-void SObjectBrowser::TransformItemToString(const ISubsystemTreeItem&  Item, TArray<FString>& OutSearchStrings) const
+void SObjectBrowser::TransformItemToString(const IObjectTreeItem&  Item, TArray<FString>& OutSearchStrings) const
 {
-	if (Item.GetAsSubsystemDescriptor())
+	if (Item.GetAsObjectDescriptor())
 	{
-		for (auto& Column : SubsystemModel->GetSelectedTableColumns())
+		for (auto& Column : ObjectModel->GetSelectedTableColumns())
 		{
 			Column->PopulateSearchStrings(Item, OutSearchStrings);
 		}
@@ -444,43 +446,43 @@ void SObjectBrowser::TransformItemToString(const ISubsystemTreeItem&  Item, TArr
 
 void SObjectBrowser::SetFilterText(const FText& InFilterText)
 {
-	SearchBoxSubsystemFilter->SetRawFilterText(InFilterText);
+	SearchBoxObjectFilter->SetRawFilterText(InFilterText);
 }
 
 FText SObjectBrowser::GetSearchBoxText() const
 {
-	return SearchBoxSubsystemFilter->GetRawFilterText();
+	return SearchBoxObjectFilter->GetRawFilterText();
 }
 
 FText SObjectBrowser::GetFilterStatusText() const
 {
-	const int32 SubsystemTotalCount = SubsystemModel->GetNumSubsystemsFromVisibleCategories();
+	const int32 ObjectTotalCount = ObjectModel->GetNumObjectsFromVisibleCategories();
 
-	if (!SubsystemModel->IsSubsystemFilterActive())
+	if (!ObjectModel->IsObjectFilterActive())
 	{
-		return FText::Format( LOCTEXT("ShowSubsystemsCounterFmt", "{0} subsystems"), FText::AsNumber( FilteredSubsystemsCount ) );
+		return FText::Format( LOCTEXT("ShowObjectsCounterFmt", "{0} objects"), FText::AsNumber( FilteredObjectsCount ) );
 	}
 	else
 	{
-		if ( FilteredSubsystemsCount == 0)
-		{   // all subsystems were filtered out
-			return FText::Format( LOCTEXT("ShowSubsystemsCounterFmt", "No matching subsystems out of {0} total"), FText::AsNumber( SubsystemTotalCount ) );
+		if ( FilteredObjectsCount == 0)
+		{   // all objects were filtered out
+			return FText::Format( LOCTEXT("ShowObjectsCounterFmt", "No matching objects out of {0} total"), FText::AsNumber( ObjectTotalCount ) );
 		}
 		else
 		{   // got something to display
-			return FText::Format( LOCTEXT("ShowingOnlySomeActorsFmt", "Showing {0} of {1} subsystems"), FText::AsNumber( FilteredSubsystemsCount ), FText::AsNumber( SubsystemTotalCount ) );
+			return FText::Format( LOCTEXT("ShowingOnlySomeActorsFmt", "Showing {0} of {1} objects"), FText::AsNumber( FilteredObjectsCount ), FText::AsNumber( ObjectTotalCount ) );
 		}
 	}
 }
 
 FSlateColor SObjectBrowser::GetFilterStatusTextColor() const
 {
-	if (!SubsystemModel->IsSubsystemFilterActive())
+	if (!ObjectModel->IsObjectFilterActive())
 	{
 		// White = no text filter
 		return FLinearColor(1.0f, 1.0f, 1.0f);
 	}
-	else if (FilteredSubsystemsCount == 0)
+	else if (FilteredObjectsCount == 0)
 	{
 		// Red = no matching actors
 		return FLinearColor(1.0f, 0.4f, 0.4f);
@@ -520,7 +522,7 @@ TSharedRef<SWidget> SObjectBrowser::GetViewOptionsButtonContent()
 
 	MenuBuilder.BeginSection(NAME_None, LOCTEXT("ViewColumnsGroup", "Columns"));
 	{
-		if (SubsystemModel->GetNumDynamicColumns() > Settings->MaxColumnTogglesToShow)
+		if (ObjectModel->GetNumDynamicColumns() > Settings->MaxColumnTogglesToShow)
 		{
 			MenuBuilder.AddSubMenu(
 				LOCTEXT("ChooseColumnSubMenu", "Choose Columns"),
@@ -537,7 +539,7 @@ TSharedRef<SWidget> SObjectBrowser::GetViewOptionsButtonContent()
 
 	MenuBuilder.BeginSection(NAME_None, LOCTEXT("ViewCategoryGroup", "Categories"));
 	{
-		if (SubsystemModel->GetNumCategories() > Settings->MaxCategoryTogglesToShow)
+		if (ObjectModel->GetNumCategories() > Settings->MaxCategoryTogglesToShow)
 		{
 			MenuBuilder.AddSubMenu(
 				LOCTEXT("ChooseCategorySubMenu", "Choose Category"),
@@ -568,7 +570,7 @@ TSharedRef<SWidget> SObjectBrowser::GetViewOptionsButtonContent()
 		);
 		MenuBuilder.AddMenuEntry(
 			LOCTEXT("ToggleGameOnly", "Only Game Modules"),
-			LOCTEXT("ToggleGameOnly_Tooltip", "Show only subsystems that are within Game Modules."),
+			LOCTEXT("ToggleGameOnly_Tooltip", "Show only objects that are within Game Modules."),
 			FSlateIcon(),
 			FUIAction(
 				FExecuteAction::CreateSP(this, &SObjectBrowser::ToggleShouldShowOnlyGame),
@@ -580,7 +582,7 @@ TSharedRef<SWidget> SObjectBrowser::GetViewOptionsButtonContent()
 		);
 		MenuBuilder.AddMenuEntry(
 			LOCTEXT("TogglePluginOnly", "Only Plugin Modules"),
-			LOCTEXT("TogglePluginOnly_Tooltip", "Show only subsystems that are within plugins."),
+			LOCTEXT("TogglePluginOnly_Tooltip", "Show only objects that are within plugins."),
 			FSlateIcon(),
 			FUIAction(
 				FExecuteAction::CreateSP(this, &SObjectBrowser::ToggleShouldShowOnlyPlugins),
@@ -622,7 +624,7 @@ void SObjectBrowser::BuildColumnPickerContent(FMenuBuilder& MenuBuilder)
 {
 	UObjectBrowserSettings* Settings = UObjectBrowserSettings::Get();
 
-	for (const ObjectColumnPtr& Column : SubsystemModel->GetDynamicTableColumns())
+	for (const ObjectColumnPtr& Column : ObjectModel->GetDynamicTableColumns())
 	{
 		MenuBuilder.AddMenuEntry(
 			Column->ConfigLabel,
@@ -641,13 +643,13 @@ void SObjectBrowser::BuildColumnPickerContent(FMenuBuilder& MenuBuilder)
 
 void SObjectBrowser::BuildCategoryPickerContent(FMenuBuilder& MenuBuilder)
 {
-	for (const SubsystemTreeItemPtr& Category : SubsystemModel->GetAllCategories())
+	for (const ObjectTreeItemPtr& Category : ObjectModel->GetAllCategories())
 	{
 		check(Category->GetAsCategoryDescriptor());
 		FObjectTreeItemID CategoryID = Category->GetID();
 
 		MenuBuilder.AddMenuEntry(Category->GetDisplayName(),
-			LOCTEXT("ToggleDisplayCategory_Tooltip", "Toggles display of subsystems for category."),
+			LOCTEXT("ToggleDisplayCategory_Tooltip", "Toggles display of objects for category."),
 			FSlateIcon(),
 			FUIAction(
 				FExecuteAction::CreateSP(this, &SObjectBrowser::ToggleDisplayCategory, CategoryID),
@@ -683,7 +685,7 @@ void SObjectBrowser::SetupColumns(SHeaderRow& HeaderRow)
 {
 	HeaderRow.ClearColumns();
 
-	for (const ObjectColumnPtr& Column : SubsystemModel->GetSelectedTableColumns())
+	for (const ObjectColumnPtr& Column : ObjectModel->GetSelectedTableColumns())
 	{
 		auto ColumnArgs = Column->GenerateHeaderColumnWidget();
 
@@ -705,12 +707,12 @@ void SObjectBrowser::SetupColumns(SHeaderRow& HeaderRow)
 }
 
 
-TSharedRef<ITableRow> SObjectBrowser::GenerateTreeRow(SubsystemTreeItemPtr Item, const TSharedRef<STableViewBase>& OwnerTable)
+TSharedRef<ITableRow> SObjectBrowser::GenerateTreeRow(ObjectTreeItemPtr Item, const TSharedRef<STableViewBase>& OwnerTable)
 {
 	check(Item.IsValid());
 
 	return SNew(SObjectBrowserTableItem, OwnerTable)
-		.InModel(SubsystemModel)
+		.InModel(ObjectModel)
 		.InBrowser(SharedThis(this))
 		.InItemModel(Item)
 		.IsItemExpanded(Item->bExpanded)
@@ -718,7 +720,7 @@ TSharedRef<ITableRow> SObjectBrowser::GenerateTreeRow(SubsystemTreeItemPtr Item,
 		;
 }
 
-void SObjectBrowser::GetChildrenForTree(SubsystemTreeItemPtr Item, TArray<SubsystemTreeItemPtr>& OutChildren)
+void SObjectBrowser::GetChildrenForTree(ObjectTreeItemPtr Item, TArray<ObjectTreeItemPtr>& OutChildren)
 {
 	OutChildren = Item->GetChildren();
 
@@ -739,13 +741,13 @@ void SObjectBrowser::GetChildrenForTree(SubsystemTreeItemPtr Item, TArray<Subsys
 	}
 }
 
-void SObjectBrowser::OnExpansionChanged(SubsystemTreeItemPtr Item, bool bIsItemExpanded)
+void SObjectBrowser::OnExpansionChanged(ObjectTreeItemPtr Item, bool bIsItemExpanded)
 {
 	Item->bExpanded = bIsItemExpanded;
 
 	if (FObjectTreeCategoryItem* Folder = Item->GetAsCategoryDescriptor())
 	{
-		for (SubsystemTreeItemPtr Child : Folder->GetChildren())
+		for (ObjectTreeItemPtr Child : Folder->GetChildren())
 		{
 			Child->bExpanded = bIsItemExpanded;
 		}
@@ -757,7 +759,7 @@ void SObjectBrowser::OnExpansionChanged(SubsystemTreeItemPtr Item, bool bIsItemE
 	RefreshView();
 }
 
-void SObjectBrowser::OnTreeViewMouseButtonDoubleClick(SubsystemTreeItemPtr Item)
+void SObjectBrowser::OnTreeViewMouseButtonDoubleClick(ObjectTreeItemPtr Item)
 {
 	if (Item.IsValid() && Item->GetAsCategoryDescriptor())
 	{
@@ -811,7 +813,7 @@ void SObjectBrowser::ShowPluginSettingsTab() const
 	FObjectBrowserModule::Get().SummonPluginSettingsTab();
 }
 
-void SObjectBrowser::OnSelectionChanged(const SubsystemTreeItemPtr Item, ESelectInfo::Type SelectInfo)
+void SObjectBrowser::OnSelectionChanged(const ObjectTreeItemPtr Item, ESelectInfo::Type SelectInfo)
 {
 	if (SelectInfo == ESelectInfo::Direct)
 	{
@@ -822,7 +824,7 @@ void SObjectBrowser::OnSelectionChanged(const SubsystemTreeItemPtr Item, ESelect
 	{
 		TGuardValue<bool> ScopeGuard(bUpdatingSelection, true);
 
-		const TArray<SubsystemTreeItemPtr>& SelectedItems = TreeWidget->GetSelectedItems();
+		const TArray<ObjectTreeItemPtr>& SelectedItems = TreeWidget->GetSelectedItems();
 
 		SetSelectedObject(SelectedItems.Num() ? SelectedItems[0] : nullptr);
 	}
@@ -836,7 +838,7 @@ const FSlateBrush* SObjectBrowser::GetWorldsMenuBrush() const
 FText SObjectBrowser::GetCurrentWorldText() const
 {
 	FFormatNamedArguments Args;
-	Args.Add(TEXT("World"), GetWorldDescription(SubsystemModel->GetCurrentWorld().Get()));
+	Args.Add(TEXT("World"), GetWorldDescription(ObjectModel->GetCurrentWorld().Get()));
 	return FText::Format(LOCTEXT("WorldsSelectButton", "World: {World}"), Args);
 }
 
@@ -896,13 +898,13 @@ void SObjectBrowser::OnSelectWorld(TWeakObjectPtr<UWorld> InWorld)
 {
 	UE_LOG(LogObjectBrowser, Log, TEXT("Selected world %s"), *GetNameSafe(InWorld.Get()));
 
-	SubsystemModel->SetCurrentWorld(InWorld);
+	ObjectModel->SetCurrentWorld(InWorld);
 	FullRefresh();
 }
 
 bool SObjectBrowser::IsWorldChecked(TWeakObjectPtr<UWorld> InWorld)
 {
-	return SubsystemModel->GetCurrentWorld() == InWorld;
+	return ObjectModel->GetCurrentWorld() == InWorld;
 }
 
 TSharedRef<SWidget> SObjectBrowser::GetWorldsButtonContent()
@@ -918,7 +920,7 @@ TSharedRef<SWidget> SObjectBrowser::GetWorldsButtonContent()
 		{
 			MenuBuilder.AddMenuEntry(
 				GetWorldDescription(World),
-				LOCTEXT("ChooseWorldToolTip", "Display subsystems for this world."),
+				LOCTEXT("ChooseWorldToolTip", "Display objects for this world."),
 				FSlateIcon(),
 				FUIAction(
 				FExecuteAction::CreateSP( this, &SObjectBrowser::OnSelectWorld, MakeWeakObjectPtr(World) ),
@@ -1023,12 +1025,12 @@ void SObjectBrowser::RecreateDetails()
 	ExistingDetails.Reset();
 }
 
-void SObjectBrowser::SetSelectedObject(SubsystemTreeItemPtr Item)
+void SObjectBrowser::SetSelectedObject(ObjectTreeItemPtr Item)
 {
 	UObject* InObject = Item.IsValid() ? Item->GetObjectForDetails() : nullptr;
 	UE_LOG(LogObjectBrowser, Log, TEXT("Selected object %s"), *GetNameSafe(InObject));
 
-	SubsystemModel->NotifySelected(Item);
+	ObjectModel->NotifySelected(Item);
 
 	if (DetailsView.IsValid())
 	{
@@ -1041,7 +1043,7 @@ void SObjectBrowser::ResetSelectedObject()
 {
 	UE_LOG(LogObjectBrowser, Log, TEXT("Reset selected object"));
 
-	SubsystemModel->NotifySelected(nullptr);
+	ObjectModel->NotifySelected(nullptr);
 
 	if (DetailsView.IsValid())
 	{
@@ -1094,18 +1096,18 @@ bool SObjectBrowser::IsDetailsPropertyVisible(const FPropertyAndParent& InProper
 	return true;
 }
 
-SubsystemTreeItemPtr SObjectBrowser::GetFirstSelectedItem() const
+ObjectTreeItemPtr SObjectBrowser::GetFirstSelectedItem() const
 {
-	return TreeWidget->GetNumItemsSelected() ? TreeWidget->GetSelectedItems()[0] : SubsystemTreeItemPtr();
+	return TreeWidget->GetNumItemsSelected() ? TreeWidget->GetSelectedItems()[0] : ObjectTreeItemPtr();
 }
 
-const FObjectTreeSubsystemItem* SObjectBrowser::GetFirstSelectedSubsystem() const
+const FObjectTreeObjectItem* SObjectBrowser::GetFirstSelectedObject() const
 {
-	for(SubsystemTreeItemPtr Selected : TreeWidget->GetSelectedItems())
+	for(ObjectTreeItemPtr Selected : TreeWidget->GetSelectedItems())
 	{
-		if (Selected->GetAsSubsystemDescriptor())
+		if (Selected->GetAsObjectDescriptor())
 		{
-			return Selected->GetAsSubsystemDescriptor();
+			return Selected->GetAsObjectDescriptor();
 		}
 	}
 
@@ -1117,7 +1119,7 @@ FObjectTreeItemID SObjectBrowser::GetFirstSelectedItemId() const
 	return TreeWidget->GetNumItemsSelected() ? TreeWidget->GetSelectedItems()[0]->GetID() : FObjectTreeItemID();
 }
 
-bool SObjectBrowser::IsItemSelected(SubsystemTreeItemPtr Item)
+bool SObjectBrowser::IsItemSelected(ObjectTreeItemPtr Item)
 {
 	return TreeWidget->IsItemSelected(Item);
 }
@@ -1152,7 +1154,7 @@ void SObjectBrowser::SetParentsExpansionState(const TMap<FObjectTreeItemID, bool
 	}
 }
 
-TSharedPtr<SWidget> SObjectBrowser::ConstructSubsystemContextMenu()
+TSharedPtr<SWidget> SObjectBrowser::ConstructObjectContextMenu()
 {
 	UToolMenus* ToolMenus = UToolMenus::Get();
 
@@ -1165,7 +1167,7 @@ TSharedPtr<SWidget> SObjectBrowser::ConstructSubsystemContextMenu()
 	FToolMenuContext Context;
 	UToolMenu* Menu = ToolMenus->GenerateMenu(FObjectBrowserModule::ObjectBrowserContextMenuName, Context);
 
-	SubsystemTreeItemPtr Selected = GetFirstSelectedItem();
+	ObjectTreeItemPtr Selected = GetFirstSelectedItem();
 	if (Selected.IsValid())
 	{
 		Selected->GenerateContextMenu(Menu);
@@ -1177,10 +1179,10 @@ TSharedPtr<SWidget> SObjectBrowser::ConstructSubsystemContextMenu()
 	return ToolMenus->GenerateWidget(Menu);
 }
 
-bool SObjectBrowser::HasSelectedSubsystem() const
+bool SObjectBrowser::HasSelectedObject() const
 {
-	auto SelectedSubsystem = GetFirstSelectedItem();
-	return SelectedSubsystem.IsValid()  && SelectedSubsystem->GetAsSubsystemDescriptor();
+	auto SelectedObject = GetFirstSelectedItem();
+	return SelectedObject.IsValid()  && SelectedObject->GetAsObjectDescriptor();
 }
 
 void SObjectBrowser::OnSettingsChanged(FName InPropertyName)
@@ -1208,7 +1210,7 @@ void SObjectBrowser::OnModulesChanged(FName ModuleThatChanged, EModuleChangeReas
 	RefreshView();
 }
 
-void SObjectBrowser::OnSubsystemDataChanged(TSharedRef<ISubsystemTreeItem> Item)
+void SObjectBrowser::OnObjectDataChanged(TSharedRef<IObjectTreeItem> Item)
 {
 	RefreshView();
 }
@@ -1217,7 +1219,7 @@ EColumnSortMode::Type SObjectBrowser::GetColumnSortMode(FName ColumnId) const
 {
 	if (SortByColumn == ColumnId)
 	{
-		auto Column = SubsystemModel->FindTableColumn(ColumnId);
+		auto Column = ObjectModel->FindTableColumn(ColumnId);
 		if (Column.IsValid() && Column->SupportsSorting())
 		{
 			return SortMode;
@@ -1229,7 +1231,7 @@ EColumnSortMode::Type SObjectBrowser::GetColumnSortMode(FName ColumnId) const
 void SObjectBrowser::OnColumnSortModeChanged(const EColumnSortPriority::Type SortPriority, const FName& ColumnId,
 	const EColumnSortMode::Type InSortMode)
 {
-	auto Column = SubsystemModel->FindTableColumn(ColumnId);
+	auto Column = ObjectModel->FindTableColumn(ColumnId);
 	if (!Column.IsValid() || !Column->SupportsSorting())
 	{
 		return;
@@ -1241,9 +1243,9 @@ void SObjectBrowser::OnColumnSortModeChanged(const EColumnSortPriority::Type Sor
 	bSortDirty = true;
 }
 
-void SObjectBrowser::SortItems(TArray<SubsystemTreeItemPtr>& Items) const
+void SObjectBrowser::SortItems(TArray<ObjectTreeItemPtr>& Items) const
 {
-	auto Column = SubsystemModel->FindTableColumn(SortByColumn);
+	auto Column = ObjectModel->FindTableColumn(SortByColumn);
 	if (Column.IsValid() && Column->SupportsSorting())
 	{
 		Column->SortItems(Items, SortMode);

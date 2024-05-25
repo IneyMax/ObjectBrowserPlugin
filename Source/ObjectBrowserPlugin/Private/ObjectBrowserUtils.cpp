@@ -1,6 +1,7 @@
 ﻿
 
 #include "ObjectBrowserUtils.h"
+
 #include "ObjectBrowserModule.h"
 #include "ObjectBrowserFlags.h"
 #include "SourceCodeNavigation.h"
@@ -8,8 +9,8 @@
 #include "Engine/LocalPlayer.h"
 #include "Framework/Notifications/NotificationManager.h"
 #include "Interfaces/IPluginManager.h"
-#include "Model/ObjectBrowserDescriptor.h"
 #include "HAL/PlatformApplicationMisc.h"
+#include "Item/ObjectTreeObjectItem.h"
 
 static FAutoConsoleCommandWithWorldArgsAndOutputDevice CmdPrintClassData(
 	TEXT("SB.PrintClass"), TEXT("Dump class details"),
@@ -20,11 +21,11 @@ static FAutoConsoleCommandWithWorldArgsAndOutputDevice CmdPrintPropertyData(
 	FConsoleCommandWithWorldArgsAndOutputDeviceDelegate::CreateStatic(&FObjectBrowserUtils::PrintPropertyDetails)
 );
 
-FString FObjectBrowserUtils::GetDefaultSubsystemOwnerName(UObject* Instance)
+FString FObjectBrowserUtils::GetDefaultObjectOwnerName(UObject* Instance)
 {
-	if (ULocalPlayerSubsystem* PlayerSubsystem = Cast<ULocalPlayerSubsystem>(Instance))
+	if (auto PlayerObject = Cast<ULocalPlayerSubsystem>(Instance))
 	{
-		if (ULocalPlayer* LocalPlayer = PlayerSubsystem->GetLocalPlayer<ULocalPlayer>())
+		if (ULocalPlayer* LocalPlayer = PlayerObject->GetLocalPlayer<ULocalPlayer>())
 		{
 			return LocalPlayer->GetName();
 		}
@@ -138,7 +139,7 @@ void FObjectBrowserUtils::CollectSourceFiles(UClass* InClass, TArray<FString>& O
 	}
 }
 
-FObjectBrowserUtils::FClassFieldStats FObjectBrowserUtils::GetClassFieldStats(UClass* InClass)
+FClassFieldStats FObjectBrowserUtils::GetClassFieldStats(UClass* InClass)
 {
 	FClassFieldStats Stats;
 
@@ -190,20 +191,20 @@ void FObjectBrowserUtils::SetClipboardText(const FString& ClipboardText)
 	FPlatformApplicationMisc::ClipboardCopy(*ClipboardText);
 }
 
-FString FObjectBrowserUtils::GenerateConfigExport(const FObjectTreeSubsystemItem* SelectedSubsystem, bool bModifiedOnly)
+FString FObjectBrowserUtils::GenerateConfigExport(const FObjectTreeObjectItem* SelectedObject, bool bModifiedOnly)
 {
 	FString ConfigBlock;
 	ConfigBlock.Reserve(256);
-	ConfigBlock += FString::Printf(TEXT("; Should be in Default%s.ini"), *SelectedSubsystem->ConfigName.ToString());
+	ConfigBlock += FString::Printf(TEXT("; Should be in Default%s.ini"), *SelectedObject->ConfigName.ToString());
 	ConfigBlock += LINE_TERMINATOR;
-	ConfigBlock += FString::Printf(TEXT("[%s.%s]"), *SelectedSubsystem->Package, *SelectedSubsystem->ClassName.ToString());
+	ConfigBlock += FString::Printf(TEXT("[%s.%s]"), *SelectedObject->Package, *SelectedObject->ClassName.ToString());
 	ConfigBlock += LINE_TERMINATOR;
 
-	UObject* const Subsystem  = SelectedSubsystem->Subsystem.Get();
-	UClass* const Class = SelectedSubsystem->Class.Get();
-	UObject* const SubsystemDefaults  = Class ? Class->GetDefaultObject() : nullptr;
+	UObject* const Object  = SelectedObject->Object.Get();
+	UClass* const Class = SelectedObject->Class.Get();
+	UObject* const ObjectDefaults  = Class ? Class->GetDefaultObject() : nullptr;
 
-	if (Subsystem && SubsystemDefaults && Class)
+	if (Object && ObjectDefaults && Class)
 	{
 		TArray<FProperty*> ModifiedProperties;
 
@@ -217,8 +218,8 @@ FString FObjectBrowserUtils::GenerateConfigExport(const FObjectTreeSubsystemItem
 			{
 				for( int32 Idx=0; Idx<Property->ArrayDim; Idx++ )
 				{
-					uint8* DataPtr      = Property->ContainerPtrToValuePtr           <uint8>((uint8*)Subsystem, Idx);
-					uint8* DefaultValue = Property->ContainerPtrToValuePtrForDefaults<uint8>(Class, (uint8*)SubsystemDefaults, Idx);
+					uint8* DataPtr      = Property->ContainerPtrToValuePtr           <uint8>((uint8*)Object, Idx);
+					uint8* DefaultValue = Property->ContainerPtrToValuePtrForDefaults<uint8>(Class, (uint8*)ObjectDefaults, Idx);
 					if (bModifiedOnly == false || !Property->Identical( DataPtr, DefaultValue, PPF_DeepCompareInstances))
 					{
 						ModifiedProperties.Add(Property);
@@ -238,7 +239,7 @@ FString FObjectBrowserUtils::GenerateConfigExport(const FObjectTreeSubsystemItem
 				ConfigBlock += LINE_TERMINATOR;
 				Prefix = TEXT("+");
 
-				FScriptArrayHelper ArrayHelper(ArrayProperty, Subsystem);
+				FScriptArrayHelper ArrayHelper(ArrayProperty, Object);
 				if (!ArrayHelper.Num())
 				{
 					continue;
@@ -247,8 +248,8 @@ FString FObjectBrowserUtils::GenerateConfigExport(const FObjectTreeSubsystemItem
 
 			for( int32 Idx=0; Idx< Property->ArrayDim; Idx++ )
 			{
-				uint8* DataPtr      = Property->ContainerPtrToValuePtr           <uint8>(Subsystem, Idx);
-				uint8* DefaultValue = Property->ContainerPtrToValuePtrForDefaults<uint8>(Class, SubsystemDefaults, Idx);
+				uint8* DataPtr      = Property->ContainerPtrToValuePtr           <uint8>(Object, Idx);
+				uint8* DefaultValue = Property->ContainerPtrToValuePtrForDefaults<uint8>(Class, ObjectDefaults, Idx);
 
 				FString ExportValue;
 #if UE_VERSION_OLDER_THAN(5,1,0)

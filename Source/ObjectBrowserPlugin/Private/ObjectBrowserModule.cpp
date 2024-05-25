@@ -1,21 +1,23 @@
 
 
+
 #include "ObjectBrowserModule.h"
-#include "ObjectBrowserSettings.h"
-#include "ObjectBrowserStyle.h"
-#include "Model/Column/ObjectBrowserColumn_Name.h"
-#include "Model/Column/ObjectBrowserColumn_Config.h"
-#include "Model/Column/ObjectBrowserColumn_Module.h"
-#include "Model/Column/ObjectBrowserColumn_Plugin.h"
-#include "UI/SObjectBrowser.h"
+
+#include "ObjectBrowserUtils.h"
 #include "ISettingsModule.h"
 #include "ISettingsSection.h"
-#include "Widgets/Docking/SDockTab.h"
 #include "LevelEditor.h"
-#include "ToolMenus.h"
+#include "ObjectBrowserSettings.h"
+#include "ObjectBrowserStyle.h"
 #include "WorkspaceMenuStructure.h"
 #include "WorkspaceMenuStructureModule.h"
 #include "Model/Category/ObjectBrowserCategory_Default.h"
+#include "Model/Column/ObjectBrowserColumn_Config.h"
+#include "Model/Column/ObjectBrowserColumn_Module.h"
+#include "Model/Column/ObjectBrowserColumn_Name.h"
+#include "Model/Column/ObjectBrowserColumn_Plugin.h"
+#include "UI/SObjectBrowser.h"
+
 
 IMPLEMENT_MODULE(FObjectBrowserModule, ObjectBrowser);
 
@@ -26,7 +28,7 @@ DEFINE_LOG_CATEGORY(LogObjectBrowser);
 const FName FObjectBrowserModule::ObjectBrowserTabName = TEXT("ObjectBrowserTab");
 const FName FObjectBrowserModule::ObjectBrowserContextMenuName = TEXT("ObjectBrowser.ContextMenu");
 
-FObjectBrowserModule::FOnGetSubsystemOwnerName FObjectBrowserModule::OnGetSubsystemOwnerName;
+FObjectBrowserModule::FOnGetObjectOwnerName FObjectBrowserModule::OnGetObjectOwnerName;
 FObjectBrowserModule::FOnGenerateTooltip FObjectBrowserModule::OnGenerateTooltip;
 FObjectBrowserModule::FOnGenerateMenu FObjectBrowserModule::OnGenerateContextMenu;
 
@@ -60,17 +62,18 @@ void FObjectBrowserModule::StartupModule()
 				LevelEditorTabManager->RegisterTabSpawner(ObjectBrowserTabName, FOnSpawnTab::CreateStatic(&FObjectBrowserModule::HandleTabManagerSpawnTab))
 					.SetDisplayName(LOCTEXT("ObjectBrowserTitle", "Object Browser"))
 					.SetTooltipText(LOCTEXT("ObjectBrowserTooltip", "Open the Object Browser tab."))
-					.SetGroup(WorkspaceMenu::GetMenuStructure().GetDeveloperToolsMiscCategory())
+					.SetGroup(WorkspaceMenu::GetMenuStructure().GetToolsCategory())
 					.SetIcon( FStyleHelper::GetSlateIcon(PanelIconName) );
 			}
 		});
-
-		// Register tool menu
+		
 		UToolMenus::Get()->RegisterMenu(ObjectBrowserContextMenuName);
-
-		// Register default columns and categories on startup
-		RegisterDefaultDynamicColumns();
-		RegisterDefaultCategories();
+		
+		RegisterDynamicColumn(MakeShared<FObjectDynamicColumn_Module>());
+		RegisterDynamicColumn(MakeShared<FObjectDynamicColumn_Config>());
+		RegisterDynamicColumn(MakeShared<FObjectDynamicColumn_Plugin>());
+		
+		RegisterCategory<FObjectCategory_Default>();
 	}
 }
 
@@ -108,7 +111,7 @@ TSharedRef<SWidget> FObjectBrowserModule::CreateObjectBrowserWidget(const FSpawn
 	return SNew(SObjectBrowser).InWorld(EditorWorld);
 }
 
-void FObjectBrowserModule::SummonSubsystemTab()
+void FObjectBrowserModule::SummonObjectTab()
 {
 	FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>(TEXT("LevelEditor"));
 	TSharedPtr<ILevelEditor> LevelEditorInstance = LevelEditorModule.GetLevelEditorInstance().Pin();
@@ -126,11 +129,6 @@ const TArray<ObjectCategoryPtr>& FObjectBrowserModule::GetCategories() const
 	return Categories;
 }
 
-void FObjectBrowserModule::RegisterDefaultCategories()
-{
-	RegisterCategory<FObjectCategory_Default>();
-}
-
 const TArray<ObjectColumnPtr>& FObjectBrowserModule::GetDynamicColumns() const
 {
 	return DynamicColumns;
@@ -141,14 +139,7 @@ void FObjectBrowserModule::AddPermanentColumns(TArray<ObjectColumnPtr>& Columns)
 	Columns.Add(MakeShared<FObjectDynamicColumn_Name>());
 }
 
-void FObjectBrowserModule::RegisterDefaultDynamicColumns()
-{
-	RegisterDynamicColumn(MakeShared<FObjectDynamicColumn_Module>());
-	RegisterDynamicColumn(MakeShared<FObjectDynamicColumn_Config>());
-	RegisterDynamicColumn(MakeShared<FObjectDynamicColumn_Plugin>());
-}
-
-void FObjectBrowserModule::RegisterCategory(TSharedRef<FObjectCategory> InCategory)
+void FObjectBrowserModule::RegisterCategory(TSharedRef<FObjectCategoryBase> InCategory)
 {
 	if (InCategory->Name.IsNone())
 	{
@@ -199,7 +190,7 @@ void FObjectBrowserModule::RegisterDynamicColumn(TSharedRef<FObjectDynamicColumn
 	DynamicColumns.Add(InColumn);
 
 	// Sort columns by order
-	DynamicColumns.StableSort(SubsystemColumnSorter());
+	DynamicColumns.StableSort(ObjectColumnSorter());
 }
 
 #undef LOCTEXT_NAMESPACE

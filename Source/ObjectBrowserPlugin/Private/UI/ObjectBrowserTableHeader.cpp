@@ -1,6 +1,6 @@
 
 
-#include "UI/ObjectBrowserTableHeader.h"
+#include "UI/SObjectBrowserTableHeader.h"
 #include "UI/SObjectBrowser.h"
 #include "Model/ObjectBrowserModel.h"
 

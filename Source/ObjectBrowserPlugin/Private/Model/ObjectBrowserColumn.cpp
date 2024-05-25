@@ -4,12 +4,13 @@
 
 #include "ObjectBrowserFlags.h"
 #include "ObjectBrowserSettings.h"
-#include "Model/ObjectBrowserDescriptor.h"
-#include "UI/ObjectBrowserTableItem.h"
+#include "UI/SObjectBrowserTableItem.h"
 #include "ObjectBrowserStyle.h"
+#include "Item/IObjectTreeItem.h"
 #include "Model/ObjectBrowserSorting.h"
 
 #define LOCTEXT_NAMESPACE "ObjectBrowser"
+
 
 FObjectDynamicColumn::FObjectDynamicColumn()
 {
@@ -41,7 +42,7 @@ bool FObjectDynamicColumn::IsValidColumnName(FName InName)
 	return !InName.IsNone() && InName != ColumnID_Name;
 }
 
-TSharedPtr<SWidget> FObjectDynamicTextColumn::GenerateColumnWidget(TSharedRef<const ISubsystemTreeItem> Item, TSharedRef<SObjectBrowserTableItem> TableRow) const
+TSharedPtr<SWidget> FObjectDynamicTextColumn::GenerateColumnWidget(TSharedRef<const IObjectTreeItem> Item, TSharedRef<SObjectBrowserTableItem> TableRow) const
 {
 	return SNew(SHorizontalBox)
 		+ SHorizontalBox::Slot()
@@ -58,12 +59,12 @@ TSharedPtr<SWidget> FObjectDynamicTextColumn::GenerateColumnWidget(TSharedRef<co
 		];
 }
 
-FText FObjectDynamicTextColumn::ExtractTooltipText(TSharedRef<const ISubsystemTreeItem> Item) const
+FText FObjectDynamicTextColumn::ExtractTooltipText(TSharedRef<const IObjectTreeItem> Item) const
 {
 	return ExtractText(Item);
 }
 
-FSlateColor FObjectDynamicTextColumn::ExtractColor(TSharedRef<const ISubsystemTreeItem> Item) const
+FSlateColor FObjectDynamicTextColumn::ExtractColor(TSharedRef<const IObjectTreeItem> Item) const
 {
 	if (Item->IsStale())
 	{
@@ -77,7 +78,7 @@ FSlateColor FObjectDynamicTextColumn::ExtractColor(TSharedRef<const ISubsystemTr
 	return FSlateColor::UseForeground();
 }
 
-FSlateColor FObjectDynamicTextColumn::ExtractColorIfEnabled(TSharedRef<const ISubsystemTreeItem> Item) const
+FSlateColor FObjectDynamicTextColumn::ExtractColorIfEnabled(TSharedRef<const IObjectTreeItem> Item) const
 {
 	if (UObjectBrowserSettings::Get()->IsColoringEnabled())
 	{
@@ -86,15 +87,15 @@ FSlateColor FObjectDynamicTextColumn::ExtractColorIfEnabled(TSharedRef<const ISu
 	return Item->IsStale() ? FSlateColor::UseSubduedForeground() : FSlateColor::UseForeground();
 }
 
-FSlateFontInfo FObjectDynamicTextColumn::ExtractFont(TSharedRef<const ISubsystemTreeItem> Item) const
+FSlateFontInfo FObjectDynamicTextColumn::ExtractFont(TSharedRef<const IObjectTreeItem> Item) const
 {
 	return FStyleHelper::GetFontStyle("WorldBrowser.LabelFont");
 }
 
-void FObjectDynamicTextColumn::SortItems(TArray<SubsystemTreeItemPtr>& RootItems, const EColumnSortMode::Type SortMode) const
+void FObjectDynamicTextColumn::SortItems(TArray<ObjectTreeItemPtr>& RootItems, const EColumnSortMode::Type SortMode) const
 {
-	ObjectBrowser::FSortHelper<SubsystemTreeItemPtr, FString>()
-		.Primary([this](TSharedPtr<ISubsystemTreeItem> Item) { return ExtractText(Item.ToSharedRef()).ToString(); }, SortMode)
+	ObjectBrowser::FSortHelper<ObjectTreeItemPtr, FString>()
+		.Primary([this](TSharedPtr<IObjectTreeItem> Item) { return ExtractText(Item.ToSharedRef()).ToString(); }, SortMode)
 		.Sort(RootItems);
 }
 
@@ -115,7 +116,7 @@ struct FObjectDynamicColumn_Tick : public FObjectDynamicColumn
 		PreferredWidthRatio = 0.05f;
 	}
 
-	virtual TSharedPtr<SWidget> GenerateColumnWidget(TSharedRef<const ISubsystemTreeItem> Item, TSharedRef<SObjectBrowserTableItem> TableRow) const override
+	virtual TSharedPtr<SWidget> GenerateColumnWidget(TSharedRef<const IObjectTreeItem> Item, TSharedRef<SObjectBrowserTableItem> TableRow) const override
 	{
 		// Build a widget to represent value
 		return SNew(SHorizontalBox)
@@ -130,10 +131,10 @@ struct FObjectDynamicColumn_Tick : public FObjectDynamicColumn
 			];
 	}
 private:
-	EVisibility ExtractIsTickable(TSharedRef<const ISubsystemTreeItem> Item) const
+	EVisibility ExtractIsTickable(TSharedRef<const IObjectTreeItem> Item) const
 	{
-		auto* Subsystem = Item->GetAsSubsystemDescriptor();
-		return Subsystem && Subsystem->Class.IsValid() && Subsystem->Class->IsChildOf(UTickableWorldSubsystem::StaticClass())
+		auto* Object = Item->GetAsObjectDescriptor();
+		return Object && Object->Class.IsValid() && Object->Class->IsChildOf(UTickableWorldObject::StaticClass())
 			? EVisibility::Visible : EVisibility::Hidden;
 	}
 };

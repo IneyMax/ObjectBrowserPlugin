@@ -2,9 +2,10 @@
 
 #include "Model/Column/ObjectBrowserColumn_Config.h"
 
-#include "UI/ObjectBrowserTableItem.h"
+#include "Item/ObjectTreeObjectItem.h"
 
 #define LOCTEXT_NAMESPACE "ObjectBrowser"
+
 
 FObjectDynamicColumn_Config::FObjectDynamicColumn_Config()
 {
@@ -14,23 +15,23 @@ FObjectDynamicColumn_Config::FObjectDynamicColumn_Config()
 	PreferredWidthRatio = 0.15f;
 }
 
-FText FObjectDynamicColumn_Config::ExtractText(TSharedRef<const ISubsystemTreeItem> Item) const
+FText FObjectDynamicColumn_Config::ExtractText(TSharedRef<const IObjectTreeItem> Item) const
 {
-	if (const FObjectTreeSubsystemItem* SubsystemItem = Item->GetAsSubsystemDescriptor())
+	if (const FObjectTreeObjectItem* ObjectItem = Item->GetAsObjectDescriptor())
 	{
-		return Item->IsConfigExportable() ? FText::FromName(SubsystemItem->ConfigName) : FText::GetEmpty();
+		return Item->IsConfigExportable() ? FText::FromName(ObjectItem->ConfigName) : FText::GetEmpty();
 	}
 
 	return FText::GetEmpty();
 }
 
-void FObjectDynamicColumn_Config::PopulateSearchStrings(const ISubsystemTreeItem& Item, TArray<FString>& OutSearchStrings) const
+void FObjectDynamicColumn_Config::PopulateSearchStrings(const IObjectTreeItem& Item, TArray<FString>& OutSearchStrings) const
 {
-	if (const FObjectTreeSubsystemItem* SubsystemItem = Item.GetAsSubsystemDescriptor())
+	if (const FObjectTreeObjectItem* ObjectItem = Item.GetAsObjectDescriptor())
 	{
-		if (SubsystemItem->IsConfigExportable())
+		if (ObjectItem->IsConfigExportable())
 		{
-			OutSearchStrings.Add(SubsystemItem->ConfigName.ToString());
+			OutSearchStrings.Add(ObjectItem->ConfigName.ToString());
 		}
 	}
 }

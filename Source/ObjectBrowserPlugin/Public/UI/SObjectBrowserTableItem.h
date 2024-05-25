@@ -2,15 +2,16 @@
 
 #pragma once
 
+#include "ObjectBrowserFwd.h"
 #include "Widgets/Views/STableRow.h"
-#include "Model/ObjectBrowserDescriptor.h"
 
 class FObjectModel;
 class SObjectBrowser;
 
-class SObjectBrowserTableItem : public SMultiColumnTableRow<SubsystemTreeItemPtr>
+
+class SObjectBrowserTableItem : public SMultiColumnTableRow<ObjectTreeItemPtr>
 {
-	using Super = SMultiColumnTableRow<SubsystemTreeItemPtr>;
+	using Super = SMultiColumnTableRow<ObjectTreeItemPtr>;
 public:
 	SLATE_BEGIN_ARGS( SObjectBrowserTableItem )
 		: _IsItemExpanded( false )
@@ -19,7 +20,7 @@ public:
 		SLATE_ARGUMENT(TSharedPtr<FObjectModel>, InModel)
 
 		/** Item model this widget represents */
-		SLATE_ARGUMENT(SubsystemTreeItemPtr, InItemModel)
+		SLATE_ARGUMENT(ObjectTreeItemPtr, InItemModel)
 
 		/** The hierarchy that this item belongs to */
 		SLATE_ARGUMENT(TSharedPtr<SObjectBrowser>, InBrowser)
@@ -43,7 +44,7 @@ public:
 
 public:
 	TSharedPtr<FObjectModel>			Model;
-	SubsystemTreeItemPtr				Item;
+	ObjectTreeItemPtr				Item;
 	TSharedPtr<SObjectBrowser>	Browser;
 
 	TAttribute<FText>					HighlightText;

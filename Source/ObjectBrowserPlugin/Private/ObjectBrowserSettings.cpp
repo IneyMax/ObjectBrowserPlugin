@@ -2,6 +2,7 @@
 
 #include "ObjectBrowserSettings.h"
 #include "ObjectBrowserModule.h"
+#include "Model/ObjectBrowserCategory.h"
 #include "Model/ObjectBrowserModel.h"
 
 UObjectBrowserSettings::FSettingChangedEvent UObjectBrowserSettings::SettingChangedEvent;

@@ -6,18 +6,18 @@
 
 #define LOCTEXT_NAMESPACE "ObjectBrowser"
 
-FObjectCategory::FObjectCategory(const FName& Name, const FText& Label, int32 SortOrder)
+FObjectCategoryBase::FObjectCategoryBase(const FName& Name, const FText& Label, int32 SortOrder)
 	: Name(Name), Label(Label), SortOrder(SortOrder)
 {
 }
 
-FSimpleSubsystemCategory::FSimpleSubsystemCategory(const FName& Name, const FText& Label, const FEnumObjectBrowserDelegate& Selector, int32 SortOrder)
-	: FObjectCategory(Name, Label, SortOrder), Selector(Selector)
+FSimpleObjectCategory::FSimpleObjectCategory(const FName& Name, const FText& Label, const FEnumObjectBrowserDelegate& Selector, int32 SortOrder)
+	: FObjectCategoryBase(Name, Label, SortOrder), Selector(Selector)
 {
 	ensure(Selector.IsBound());
 }
 
-void FSimpleSubsystemCategory::Select(UWorld* InContext, TArray<UObject*>& OutData) const
+void FSimpleObjectCategory::Select(UWorld* InContext, TArray<UObject*>& OutData) const
 {
 	Selector.Execute(InContext, OutData);
 }
@@ -32,7 +32,7 @@ void RegisterCategoryExample()
 	// Get a reference to Object Browser module instance or load it
 	FObjectBrowserModule& Module = FModuleManager::LoadModuleChecked<FObjectBrowserModule>(TEXT("ObjectBrowser"));
 	// Construct category
-	auto SampleCategory = MakeShared<FSimpleSubsystemCategory>();
+	auto SampleCategory = MakeShared<FSimpleObjectCategory>();
 	SampleCategory->Name = TEXT("Sample");
 	SampleCategory->Label = INVTEXT("Sample ObjectBrowser");
 	SampleCategory->SortOrder = 50;

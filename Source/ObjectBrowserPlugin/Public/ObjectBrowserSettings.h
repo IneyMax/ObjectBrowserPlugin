@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "ObjectBrowserSettings.generated.h"
 
+
 USTRUCT()
 struct FObjectBrowserConfigItem
 {
@@ -130,11 +131,11 @@ protected:
 	UPROPERTY(config, EditAnywhere, Category=General, meta=(ConfigAffectsDetails))
 	bool bEditAnyProperties = false;
 
-	// Should show subsystems only from Game Modules?
+	// Should show objects only from Game Modules?
 	UPROPERTY(config, EditAnywhere, Category=General, meta=(ConfigAffectsView))
 	bool bShowOnlyGameModules = false;
 
-	// Should show subsystems only from Plugins?
+	// Should show objects only from Plugins?
 	UPROPERTY(config, EditAnywhere, Category=General, meta=(ConfigAffectsView))
 	bool bShowOnlyPluginModules = false;
 

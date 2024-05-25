@@ -52,47 +52,27 @@ FObjectBrowserStyle::FObjectBrowserStyle() : FSlateStyleSet(StyleName)
 
 const ISlateStyle& FStyleHelper::Get()
 {
-#if UE_VERSION_OLDER_THAN(5,1,0)
-	return FEditorStyle::Get();
-#else
 	return FAppStyle::Get();
-#endif
 }
 
 const FSlateBrush* FStyleHelper::GetBrush(const FName& InName)
 {
-#if UE_VERSION_OLDER_THAN(5,1,0)
-	return FEditorStyle::GetBrush(InName);
-#else
 	return FAppStyle::GetBrush(InName);
-#endif
 }
 
 FSlateFontInfo FStyleHelper::GetFontStyle(const FName& InName)
 {
-#if UE_VERSION_OLDER_THAN(5,1,0)
-	return FEditorStyle::GetFontStyle(InName);
-#else
 	return FAppStyle::GetFontStyle(InName);
-#endif
 }
 
 FSlateIcon FStyleHelper::GetSlateIcon(const FName& InIcon)
 {
-#if UE_VERSION_OLDER_THAN(5,1,0)
-	return FSlateIcon( FEditorStyle::GetStyleSetName(), InIcon );
-#else
 	return FSlateIcon(  FAppStyle::GetAppStyleSetName(), InIcon);
-#endif
 }
 
 FSlateColor FStyleHelper::GetSlateColor(const FName& InName)
 {
-#if UE_VERSION_OLDER_THAN(5,1,0)
-	return FEditorStyle::GetSlateColor(InName);
-#else
 	return FAppStyle::GetSlateColor(InName);
-#endif
 }
 
 #undef IMAGE_BRUSH
