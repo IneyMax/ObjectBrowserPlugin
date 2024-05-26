@@ -26,7 +26,7 @@ public:
 	/**
 	 * Get list of all registered Object categories
 	 */
-	OBJECTBROWSERPLUGIN_API const TArray<ObjectCategoryPtr>& GetCategories() const;
+	OBJECTBROWSERPLUGIN_API const TArray<FObjectCategoryPtr>& GetCategories() const;
 	
 	/**
 	 * Register a new category
@@ -47,7 +47,7 @@ public:
 	/**
 	 * Get a list of all custom dynamic columns
 	 */
-	const TArray<ObjectColumnPtr>& GetDynamicColumns() const;
+	const TArray<FObjectColumnPtr>& GetDynamicColumns() const;
 	
 	/**
 	 * Register a new custom dynamic column
@@ -63,7 +63,7 @@ public:
 	/**
 	 * Populate permanent columns
 	 */
-	static void AddPermanentColumns(TArray<ObjectColumnPtr>& Columns);
+	static void AddPermanentColumns(TArray<FObjectColumnPtr>& Columns);
 
 	/**
 	 * Open editor settings tab with plugin settings pre-selected
@@ -103,10 +103,10 @@ private:
 	TSharedPtr<class ISettingsSection> SettingsSection;
 	
 	// Instances of object categories
-	TArray<ObjectCategoryPtr> Categories;
+	TArray<FObjectCategoryPtr> Categories;
 	
 	// Instances of dynamic object columns
-	TArray<ObjectColumnPtr> DynamicColumns;
+	TArray<FObjectColumnPtr> DynamicColumns;
 };
 
 template <typename TCategory, typename... TArgs>

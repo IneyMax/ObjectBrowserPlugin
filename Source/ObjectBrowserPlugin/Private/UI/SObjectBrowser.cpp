@@ -17,12 +17,13 @@
 #include "EditorFontGlyphs.h"
 #include "Engine/MemberReference.h"
 #include "IDetailsView.h"
-#include "ObjectBrowserFilters.h"
-#include "Item/ObjectTreeCategoryItem.h"
+#include "Item/ObjectBrowserTreeCategoryItem.h"
 #include "Kismet2/SClassPickerDialog.h"
-#include "UI/SObjectBrowserTableHeader.h"
+#include "Model/ObjectBrowserFilters.h"
+#include "UI/SObjectBrowserHeaderRow.h"
 #include "UI/SObjectBrowserTableItem.h"
-#include "UI/SObjectBrowserTreeWidget.h"
+#include "UI/SObjectBrowserTreeView.h"
+
 
 #define LOCTEXT_NAMESPACE "ObjectBrowser"
 
@@ -92,7 +93,7 @@ void SObjectBrowser::Construct(const FArguments& InArgs)
 	SearchBoxObjectFilter->OnChanged().AddSP(this, &SObjectBrowser::FullRefresh);
 
 	// Generate category selector
-	CategoryFilter = MakeShared<ObjectCategoryFilter>();
+	CategoryFilter = MakeShared<FObjectCategoryFilter>();
 	CategoryFilter->OnChanged().AddSP(this, &SObjectBrowser::FullRefresh);
 
 	// Assign filters to model
@@ -100,7 +101,7 @@ void SObjectBrowser::Construct(const FArguments& InArgs)
 	ObjectModel->ObjectTextFilter = SearchBoxObjectFilter;
 
 	// Generate tree view header.
-	HeaderRowWidget = SNew(SObjectHeaderRow, ObjectModel, SharedThis(this));
+	HeaderRowWidget = SNew(SObjectBrowserHeaderRow, ObjectModel, SharedThis(this));
 
 	// Build the details viewer
 	DetailsView = CreateDetails();
@@ -227,7 +228,7 @@ void SObjectBrowser::Construct(const FArguments& InArgs)
 					.FillHeight(1.f)
 					.Padding(0, 0, 0, 2)
 					[
-						SAssignNew(TreeWidget, SObjectTreeWidget, ObjectModel, SharedThis(this))
+						SAssignNew(TreeWidget, SObjectBrowserTreeView, ObjectModel, SharedThis(this))
 							.TreeItemsSource(&RootTreeItems)
 							.SelectionMode(ESelectionMode::Single)
 							.OnGenerateRow(this, &SObjectBrowser::GenerateTreeRow)
@@ -377,12 +378,12 @@ void SObjectBrowser::Populate()
 		ResetSelectedObject();
 
 		ObjectModel->GetFilteredCategories(RootTreeItems);
-		for (ObjectTreeItemPtr Category : RootTreeItems)
+		for (FObjectTreeItemPtr Category : RootTreeItems)
 		{
 			TreeItemMap.Add(Category->GetID(), Category);
 
 			ObjectModel->GetFilteredObjects(Category, Category->Children);
-			for (ObjectTreeItemPtr  Child : Category->GetChildren())
+			for (FObjectTreeItemPtr  Child : Category->GetChildren())
 			{
 				TreeItemMap.Add(Child->GetID(), Child);
 
@@ -395,7 +396,7 @@ void SObjectBrowser::Populate()
 
 	SetParentsExpansionState(ExpansionStateInfo);
 
-	if (ObjectTreeItemPtr LastSelected = TreeItemMap.FindRef(SelectedItem))
+	if (FObjectTreeItemPtr LastSelected = TreeItemMap.FindRef(SelectedItem))
 	{
 		SetSelectedObject(LastSelected);
 	}
@@ -624,7 +625,7 @@ void SObjectBrowser::BuildColumnPickerContent(FMenuBuilder& MenuBuilder)
 {
 	UObjectBrowserSettings* Settings = UObjectBrowserSettings::Get();
 
-	for (const ObjectColumnPtr& Column : ObjectModel->GetDynamicTableColumns())
+	for (const FObjectColumnPtr& Column : ObjectModel->GetDynamicTableColumns())
 	{
 		MenuBuilder.AddMenuEntry(
 			Column->ConfigLabel,
@@ -643,7 +644,7 @@ void SObjectBrowser::BuildColumnPickerContent(FMenuBuilder& MenuBuilder)
 
 void SObjectBrowser::BuildCategoryPickerContent(FMenuBuilder& MenuBuilder)
 {
-	for (const ObjectTreeItemPtr& Category : ObjectModel->GetAllCategories())
+	for (const FObjectTreeItemPtr& Category : ObjectModel->GetAllCategories())
 	{
 		check(Category->GetAsCategoryDescriptor());
 		FObjectTreeItemID CategoryID = Category->GetID();
@@ -685,7 +686,7 @@ void SObjectBrowser::SetupColumns(SHeaderRow& HeaderRow)
 {
 	HeaderRow.ClearColumns();
 
-	for (const ObjectColumnPtr& Column : ObjectModel->GetSelectedTableColumns())
+	for (const FObjectColumnPtr& Column : ObjectModel->GetSelectedTableColumns())
 	{
 		auto ColumnArgs = Column->GenerateHeaderColumnWidget();
 
@@ -707,7 +708,7 @@ void SObjectBrowser::SetupColumns(SHeaderRow& HeaderRow)
 }
 
 
-TSharedRef<ITableRow> SObjectBrowser::GenerateTreeRow(ObjectTreeItemPtr Item, const TSharedRef<STableViewBase>& OwnerTable)
+TSharedRef<ITableRow> SObjectBrowser::GenerateTreeRow(FObjectTreeItemPtr Item, const TSharedRef<STableViewBase>& OwnerTable)
 {
 	check(Item.IsValid());
 
@@ -720,7 +721,7 @@ TSharedRef<ITableRow> SObjectBrowser::GenerateTreeRow(ObjectTreeItemPtr Item, co
 		;
 }
 
-void SObjectBrowser::GetChildrenForTree(ObjectTreeItemPtr Item, TArray<ObjectTreeItemPtr>& OutChildren)
+void SObjectBrowser::GetChildrenForTree(FObjectTreeItemPtr Item, TArray<FObjectTreeItemPtr>& OutChildren)
 {
 	OutChildren = Item->GetChildren();
 
@@ -741,13 +742,13 @@ void SObjectBrowser::GetChildrenForTree(ObjectTreeItemPtr Item, TArray<ObjectTre
 	}
 }
 
-void SObjectBrowser::OnExpansionChanged(ObjectTreeItemPtr Item, bool bIsItemExpanded)
+void SObjectBrowser::OnExpansionChanged(FObjectTreeItemPtr Item, bool bIsItemExpanded)
 {
 	Item->bExpanded = bIsItemExpanded;
 
-	if (FObjectTreeCategoryItem* Folder = Item->GetAsCategoryDescriptor())
+	if (FObjectBrowserTreeCategoryItem* Folder = Item->GetAsCategoryDescriptor())
 	{
-		for (ObjectTreeItemPtr Child : Folder->GetChildren())
+		for (FObjectTreeItemPtr Child : Folder->GetChildren())
 		{
 			Child->bExpanded = bIsItemExpanded;
 		}
@@ -759,7 +760,7 @@ void SObjectBrowser::OnExpansionChanged(ObjectTreeItemPtr Item, bool bIsItemExpa
 	RefreshView();
 }
 
-void SObjectBrowser::OnTreeViewMouseButtonDoubleClick(ObjectTreeItemPtr Item)
+void SObjectBrowser::OnTreeViewMouseButtonDoubleClick(FObjectTreeItemPtr Item)
 {
 	if (Item.IsValid() && Item->GetAsCategoryDescriptor())
 	{
@@ -813,7 +814,7 @@ void SObjectBrowser::ShowPluginSettingsTab() const
 	FObjectBrowserModule::Get().SummonPluginSettingsTab();
 }
 
-void SObjectBrowser::OnSelectionChanged(const ObjectTreeItemPtr Item, ESelectInfo::Type SelectInfo)
+void SObjectBrowser::OnSelectionChanged(const FObjectTreeItemPtr Item, ESelectInfo::Type SelectInfo)
 {
 	if (SelectInfo == ESelectInfo::Direct)
 	{
@@ -824,7 +825,7 @@ void SObjectBrowser::OnSelectionChanged(const ObjectTreeItemPtr Item, ESelectInf
 	{
 		TGuardValue<bool> ScopeGuard(bUpdatingSelection, true);
 
-		const TArray<ObjectTreeItemPtr>& SelectedItems = TreeWidget->GetSelectedItems();
+		const TArray<FObjectTreeItemPtr>& SelectedItems = TreeWidget->GetSelectedItems();
 
 		SetSelectedObject(SelectedItems.Num() ? SelectedItems[0] : nullptr);
 	}
@@ -1025,7 +1026,7 @@ void SObjectBrowser::RecreateDetails()
 	ExistingDetails.Reset();
 }
 
-void SObjectBrowser::SetSelectedObject(ObjectTreeItemPtr Item)
+void SObjectBrowser::SetSelectedObject(FObjectTreeItemPtr Item)
 {
 	UObject* InObject = Item.IsValid() ? Item->GetObjectForDetails() : nullptr;
 	UE_LOG(LogObjectBrowser, Log, TEXT("Selected object %s"), *GetNameSafe(InObject));
@@ -1096,14 +1097,14 @@ bool SObjectBrowser::IsDetailsPropertyVisible(const FPropertyAndParent& InProper
 	return true;
 }
 
-ObjectTreeItemPtr SObjectBrowser::GetFirstSelectedItem() const
+FObjectTreeItemPtr SObjectBrowser::GetFirstSelectedItem() const
 {
-	return TreeWidget->GetNumItemsSelected() ? TreeWidget->GetSelectedItems()[0] : ObjectTreeItemPtr();
+	return TreeWidget->GetNumItemsSelected() ? TreeWidget->GetSelectedItems()[0] : FObjectTreeItemPtr();
 }
 
-const FObjectTreeObjectItem* SObjectBrowser::GetFirstSelectedObject() const
+const FObjectBrowserTreeObjectItem* SObjectBrowser::GetFirstSelectedObject() const
 {
-	for(ObjectTreeItemPtr Selected : TreeWidget->GetSelectedItems())
+	for(FObjectTreeItemPtr Selected : TreeWidget->GetSelectedItems())
 	{
 		if (Selected->GetAsObjectDescriptor())
 		{
@@ -1119,7 +1120,7 @@ FObjectTreeItemID SObjectBrowser::GetFirstSelectedItemId() const
 	return TreeWidget->GetNumItemsSelected() ? TreeWidget->GetSelectedItems()[0]->GetID() : FObjectTreeItemID();
 }
 
-bool SObjectBrowser::IsItemSelected(ObjectTreeItemPtr Item)
+bool SObjectBrowser::IsItemSelected(FObjectTreeItemPtr Item)
 {
 	return TreeWidget->IsItemSelected(Item);
 }
@@ -1167,7 +1168,7 @@ TSharedPtr<SWidget> SObjectBrowser::ConstructObjectContextMenu()
 	FToolMenuContext Context;
 	UToolMenu* Menu = ToolMenus->GenerateMenu(FObjectBrowserModule::ObjectBrowserContextMenuName, Context);
 
-	ObjectTreeItemPtr Selected = GetFirstSelectedItem();
+	FObjectTreeItemPtr Selected = GetFirstSelectedItem();
 	if (Selected.IsValid())
 	{
 		Selected->GenerateContextMenu(Menu);
@@ -1243,7 +1244,7 @@ void SObjectBrowser::OnColumnSortModeChanged(const EColumnSortPriority::Type Sor
 	bSortDirty = true;
 }
 
-void SObjectBrowser::SortItems(TArray<ObjectTreeItemPtr>& Items) const
+void SObjectBrowser::SortItems(TArray<FObjectTreeItemPtr>& Items) const
 {
 	auto Column = ObjectModel->FindTableColumn(SortByColumn);
 	if (Column.IsValid() && Column->SupportsSorting())

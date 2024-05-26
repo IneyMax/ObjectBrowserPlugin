@@ -3,14 +3,25 @@
 #pragma once
 #include "ObjectBrowserTypes.h"
 
-
-struct FObjectDynamicColumn;
-struct FObjectCategoryBase;
 struct IObjectTreeItem;
 
+struct FObjectBrowserTreeObjectItem;
+
+struct FObjectDynamicColumn;
+
+struct FObjectCategoryBase;
+struct FObjectBrowserTreeCategoryItem;
+
 using FObjectTreeItemID = FName;
-using ObjectTreeItemPtr = TSharedPtr<IObjectTreeItem>;
-using ObjectTreeItemConstPtr = TSharedPtr<const IObjectTreeItem>;
-using ObjectCategoryPtr = TSharedPtr<FObjectCategoryBase>;
+using FObjectTreeItemConstPtr = TSharedPtr<const IObjectTreeItem>;
+using FObjectTreeItemPtr = TSharedPtr<IObjectTreeItem>;
+using FObjectCategoryPtr = TSharedPtr<FObjectCategoryBase>;
 using FClassPropertyCounts = FClassFieldStats;
-using ObjectColumnPtr = TSharedPtr<FObjectDynamicColumn>;
+using FObjectColumnPtr = TSharedPtr<FObjectDynamicColumn>;
+
+class FObjectModel;
+class SObjectBrowser;
+
+class SObjectBrowserTreeView;
+class IDetailsView;
+

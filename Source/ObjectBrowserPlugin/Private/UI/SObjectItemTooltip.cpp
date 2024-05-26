@@ -1,14 +1,15 @@
 ﻿
 
-#include "UI/SObjectBrowserTableItemTooltip.h"
+#include "UI/SObjectItemTooltip.h"
 #include "ObjectBrowserFlags.h"
 #include "ObjectBrowserModule.h"
 #include "ObjectBrowserStyle.h"
 #include "Item/IObjectTreeItem.h"
 
+
 #define LOCTEXT_NAMESPACE "ObjectBrowser"
 
-void SObjectBrowserTableItemTooltip::Construct(const FArguments& InArgs)
+void SObjectItemTooltip::Construct(const FArguments& InArgs)
 {
 	ObjectBrowserTableItem = InArgs._ObjectBrowserTableItem;
 
@@ -19,7 +20,7 @@ void SObjectBrowserTableItemTooltip::Construct(const FArguments& InArgs)
 	);
 }
 
-void SObjectBrowserTableItemTooltip::OnOpening()
+void SObjectItemTooltip::OnOpening()
 {
 	TSharedPtr<SObjectBrowserTableItem> TableItem = ObjectBrowserTableItem.Pin();
 	if (TableItem.IsValid())
@@ -28,7 +29,7 @@ void SObjectBrowserTableItemTooltip::OnOpening()
 	}
 }
 
-void SObjectBrowserTableItemTooltip::OnClosed()
+void SObjectItemTooltip::OnClosed()
 {
 #if UE_VERSION_OLDER_THAN(5,0,0)
 	SetContentWidget(SNullWidget::NullWidget);
@@ -37,7 +38,7 @@ void SObjectBrowserTableItemTooltip::OnClosed()
 #endif
 }
 
-TSharedRef<SWidget> SObjectBrowserTableItemTooltip::CreateToolTipWidget(TSharedRef<SObjectBrowserTableItem> TableItem) const
+TSharedRef<SWidget> SObjectItemTooltip::CreateToolTipWidget(TSharedRef<SObjectBrowserTableItem> TableItem) const
 {
 	if (TableItem->Item.IsValid())
 	{

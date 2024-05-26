@@ -6,12 +6,12 @@
 #include "Widgets/SToolTip.h"
 
 
-class SObjectBrowserTableItemTooltip : public SToolTip
+class SObjectItemTooltip : public SToolTip
 {
 	using Super = SToolTip;
 
 public:
-	SLATE_BEGIN_ARGS(SObjectBrowserTableItemTooltip)
+	SLATE_BEGIN_ARGS(SObjectItemTooltip)
 	    { }
 		SLATE_ARGUMENT(TSharedPtr<SObjectBrowserTableItem>, ObjectBrowserTableItem)
 	SLATE_END_ARGS()
@@ -38,7 +38,7 @@ private:
 
 class OBJECTBROWSERPLUGIN_API FObjectBrowserTableItemTooltipBuilder
 {
-	friend SObjectBrowserTableItemTooltip;
+	friend SObjectItemTooltip;
 
 	TSharedRef<SObjectBrowserTableItem> Item;
 	TSharedPtr<SVerticalBox>		Primary;

@@ -1,35 +1,36 @@
 
 
-#include "ObjectBrowserFilters.h"
+
 #include "ObjectBrowserSettings.h"
+#include "Model/ObjectBrowserFilters.h"
 
 
-ObjectCategoryFilter::ObjectCategoryFilter()
+FObjectCategoryFilter::FObjectCategoryFilter()
 {
 	// load initial state from config
 	UObjectBrowserSettings::Get()->LoadCategoryStates(FilterState);
 }
 
-bool ObjectCategoryFilter::PassesFilter(const IObjectTreeItem& InItem) const
+bool FObjectCategoryFilter::PassesFilter(const IObjectTreeItem& InItem) const
 {
 	return IsCategoryVisible(InItem.GetID());
 }
 
-void ObjectCategoryFilter::ShowCategory(FObjectTreeItemID InCategory)
+void FObjectCategoryFilter::ShowCategory(FObjectTreeItemID InCategory)
 {
 	FilterState.Add(InCategory, true);
 	UObjectBrowserSettings::Get()->SetCategoryState(InCategory, true);
 	OnChangedInternal.Broadcast();
 }
 
-void ObjectCategoryFilter::HideCategory(FObjectTreeItemID InCategory)
+void FObjectCategoryFilter::HideCategory(FObjectTreeItemID InCategory)
 {
 	FilterState.Add(InCategory, false);
 	UObjectBrowserSettings::Get()->SetCategoryState(InCategory, false);
 	OnChangedInternal.Broadcast();
 }
 
-bool ObjectCategoryFilter::IsCategoryVisible(FObjectTreeItemID InCategory) const
+bool FObjectCategoryFilter::IsCategoryVisible(FObjectTreeItemID InCategory) const
 {
 	return !FilterState.Contains(InCategory) ? true : FilterState.FindChecked(InCategory);
 }

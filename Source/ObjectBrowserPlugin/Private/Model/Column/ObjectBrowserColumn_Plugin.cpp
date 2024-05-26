@@ -3,7 +3,7 @@
 #include "Model/Column/ObjectBrowserColumn_Plugin.h"
 
 #include "Item/IObjectTreeItem.h"
-#include "Item/ObjectTreeObjectItem.h"
+#include "Item/ObjectBrowserTreeObjectItem.h"
 
 #define LOCTEXT_NAMESPACE "ObjectBrowser"
 
@@ -18,7 +18,7 @@ FObjectDynamicColumn_Plugin::FObjectDynamicColumn_Plugin()
 
 FText FObjectDynamicColumn_Plugin::ExtractText(TSharedRef<const IObjectTreeItem> Item) const
 {
-	if (const FObjectTreeObjectItem* ObjectItem = Item->GetAsObjectDescriptor())
+	if (const FObjectBrowserTreeObjectItem* ObjectItem = Item->GetAsObjectDescriptor())
 	{
 		return FText::FromString(ObjectItem->PluginDisplayName);
 	}
@@ -28,7 +28,7 @@ FText FObjectDynamicColumn_Plugin::ExtractText(TSharedRef<const IObjectTreeItem>
 
 void FObjectDynamicColumn_Plugin::PopulateSearchStrings(const IObjectTreeItem& Item, TArray<FString>& OutSearchStrings) const
 {
-	if (const FObjectTreeObjectItem* ObjectItem = Item.GetAsObjectDescriptor())
+	if (const FObjectBrowserTreeObjectItem* ObjectItem = Item.GetAsObjectDescriptor())
 	{
 		OutSearchStrings.Add(ObjectItem->PluginDisplayName);
 	}

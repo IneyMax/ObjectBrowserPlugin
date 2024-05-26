@@ -124,17 +124,17 @@ void FObjectBrowserModule::SummonPluginSettingsTab()
 	Module.ShowViewer(TEXT("Editor"), TEXT("Plugins"), TEXT("ObjectBrowser"));
 }
 
-const TArray<ObjectCategoryPtr>& FObjectBrowserModule::GetCategories() const
+const TArray<FObjectCategoryPtr>& FObjectBrowserModule::GetCategories() const
 {
 	return Categories;
 }
 
-const TArray<ObjectColumnPtr>& FObjectBrowserModule::GetDynamicColumns() const
+const TArray<FObjectColumnPtr>& FObjectBrowserModule::GetDynamicColumns() const
 {
 	return DynamicColumns;
 }
 
-void FObjectBrowserModule::AddPermanentColumns(TArray<ObjectColumnPtr>& Columns)
+void FObjectBrowserModule::AddPermanentColumns(TArray<FObjectColumnPtr>& Columns)
 {
 	Columns.Add(MakeShared<FObjectDynamicColumn_Name>());
 }
@@ -147,7 +147,7 @@ void FObjectBrowserModule::RegisterCategory(TSharedRef<FObjectCategoryBase> InCa
 		return;
 	}
 
-	for (const ObjectCategoryPtr& Category : Categories)
+	for (const FObjectCategoryPtr& Category : Categories)
 	{
 		if (Category->Name == InCategory->Name)
 		{
@@ -178,7 +178,7 @@ void FObjectBrowserModule::RegisterDynamicColumn(TSharedRef<FObjectDynamicColumn
 		return;
 	}
 
-	for (ObjectColumnPtr& Column : DynamicColumns)
+	for (FObjectColumnPtr& Column : DynamicColumns)
 	{
 		if (Column->Name == InColumn->Name)
 		{
@@ -190,7 +190,7 @@ void FObjectBrowserModule::RegisterDynamicColumn(TSharedRef<FObjectDynamicColumn
 	DynamicColumns.Add(InColumn);
 
 	// Sort columns by order
-	DynamicColumns.StableSort(ObjectColumnSorter());
+	DynamicColumns.StableSort(FObjectColumnSorter());
 }
 
 #undef LOCTEXT_NAMESPACE

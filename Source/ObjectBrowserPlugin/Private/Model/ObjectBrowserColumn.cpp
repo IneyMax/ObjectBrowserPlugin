@@ -92,16 +92,16 @@ FSlateFontInfo FObjectDynamicTextColumn::ExtractFont(TSharedRef<const IObjectTre
 	return FStyleHelper::GetFontStyle("WorldBrowser.LabelFont");
 }
 
-void FObjectDynamicTextColumn::SortItems(TArray<ObjectTreeItemPtr>& RootItems, const EColumnSortMode::Type SortMode) const
+void FObjectDynamicTextColumn::SortItems(TArray<FObjectTreeItemPtr>& RootItems, const EColumnSortMode::Type SortMode) const
 {
-	ObjectBrowser::FSortHelper<ObjectTreeItemPtr, FString>()
+	ObjectBrowser::FSortHelper<FObjectTreeItemPtr, FString>()
 		.Primary([this](TSharedPtr<IObjectTreeItem> Item) { return ExtractText(Item.ToSharedRef()).ToString(); }, SortMode)
 		.Sort(RootItems);
 }
 
 #undef LOCTEXT_NAMESPACE
 
-#if ENABLE_SUBSYSTEM_BROWSER_EXAMPLES && SINCE_UE_VERSION(4, 27, 0)
+#if ENABLE_OBJECT_BROWSER_EXAMPLES && SINCE_UE_VERSION(4, 27, 0)
 
 // 1. Create a new struct inheriting FObjectDynamicColumn
 

@@ -10,18 +10,18 @@
 #include "Widgets/Notifications/SNotificationList.h"
 
 
-struct OBJECTBROWSERPLUGIN_API ObjectCategorySorter
+struct OBJECTBROWSERPLUGIN_API FObjectCategorySorter
 {
-	bool operator()(const ObjectTreeItemPtr& A, const ObjectTreeItemPtr& B) const
+	bool operator()(const FObjectTreeItemPtr& A, const FObjectTreeItemPtr& B) const
 	{
 		return A->GetSortOrder() < B->GetSortOrder();
 	}
 };
 
 
-struct OBJECTBROWSERPLUGIN_API ObjectColumnSorter
+struct OBJECTBROWSERPLUGIN_API FObjectColumnSorter
 {
-	bool operator()(const ObjectColumnPtr& A, const ObjectColumnPtr& B) const
+	bool operator()(const FObjectColumnPtr& A, const FObjectColumnPtr& B) const
 	{
 		return A->SortOrder < B->SortOrder;
 	}
@@ -83,7 +83,7 @@ struct OBJECTBROWSERPLUGIN_API FObjectBrowserUtils
 	 * @param bModifiedOnly
 	 * @return
 	 */
-	static FString GenerateConfigExport(const struct FObjectTreeObjectItem* Item, bool bModifiedOnly);
+	static FString GenerateConfigExport(const struct FObjectBrowserTreeObjectItem* Item, bool bModifiedOnly);
 
 	/**
 	 *

@@ -19,10 +19,10 @@ public:
 
 
 /* Object category filter */
-class ObjectCategoryFilter : public IFilter<const IObjectTreeItem&>
+class FObjectCategoryFilter : public IFilter<const IObjectTreeItem&>
 {
 public:
-	ObjectCategoryFilter();
+	FObjectCategoryFilter();
 
 	virtual FChangedEvent& OnChanged() override { return OnChangedInternal; }
 	virtual bool PassesFilter(const IObjectTreeItem& InItem) const override;

@@ -5,7 +5,7 @@
 #include "ObjectBrowserFwd.h"
 
 class ObjectTextFilter;
-class ObjectCategoryFilter;
+class FObjectCategoryFilter;
 struct IObjectTreeItem;
 
 
@@ -21,31 +21,31 @@ public:
 	bool IsObjectFilterActive() const;
 
 	int32 GetNumCategories() const;
-	const TArray<ObjectTreeItemPtr>& GetAllCategories() const;
-	void GetFilteredCategories(TArray<ObjectTreeItemPtr>& OutCategories) const;
+	const TArray<FObjectTreeItemPtr>& GetAllCategories() const;
+	void GetFilteredCategories(TArray<FObjectTreeItemPtr>& OutCategories) const;
 
-	const TArray<ObjectTreeItemPtr>& GetAllObjects() const;
-	void GetAllObjectsInCategory(ObjectTreeItemConstPtr Category, TArray<ObjectTreeItemPtr>& OutChildren) const;
+	const TArray<FObjectTreeItemPtr>& GetAllObjects() const;
+	void GetAllObjectsInCategory(FObjectTreeItemConstPtr Category, TArray<FObjectTreeItemPtr>& OutChildren) const;
 
-	void GetFilteredObjects(ObjectTreeItemConstPtr Category, TArray<ObjectTreeItemPtr>& OutChildren) const;
+	void GetFilteredObjects(FObjectTreeItemConstPtr Category, TArray<FObjectTreeItemPtr>& OutChildren) const;
 
 	/* get total number of objects in visible categories */
 	int32 GetNumObjectsFromVisibleCategories() const;
 
 	/* find a permanent or dynamic column by its name */
-	ObjectColumnPtr FindTableColumn(const FName& ColumnName) const;
+	FObjectColumnPtr FindTableColumn(const FName& ColumnName) const;
 	
 	/* returns all visible permanent and dynamic columns in sorted order */
-	TArray<ObjectColumnPtr> GetSelectedTableColumns() const;
+	TArray<FObjectColumnPtr> GetSelectedTableColumns() const;
 
 	/* returns all dynamic columns in sorted order */
-	TArray<ObjectColumnPtr> GetDynamicTableColumns() const;
+	TArray<FObjectColumnPtr> GetDynamicTableColumns() const;
 	
 	/* return a total number of dynamic columns registered */
 	int32 GetNumDynamicColumns() const;
 	
 	/* check if dynamic column is enabled by settings */
-	bool ShouldShowColumn(ObjectColumnPtr Column) const;
+	bool ShouldShowColumn(FObjectColumnPtr Column) const;
 
 	bool IsItemSelected(TSharedRef<const IObjectTreeItem> Item);
 
@@ -65,16 +65,16 @@ private:
 	void PopulateObjects();
 
 	/* Global list of all categories */
-	TArray<ObjectTreeItemPtr> AllCategories;
+	TArray<FObjectTreeItemPtr> AllCategories;
 	
 	/* Global list of all objects */
-	TArray<ObjectTreeItemPtr> AllObjects;
+	TArray<FObjectTreeItemPtr> AllObjects;
 	
 	/* Global list of all objects by category */
-	TMap<FName, TArray<ObjectTreeItemPtr>> AllObjectsByCategory;
+	TMap<FName, TArray<FObjectTreeItemPtr>> AllObjectsByCategory;
 	
 	/* List of permanent columns */
-	TArray<ObjectColumnPtr> PermanentColumns;
+	TArray<FObjectColumnPtr> PermanentColumns;
 
 	/* Pointer to currently browsing world */
 	TWeakObjectPtr<UWorld> CurrentWorld;
@@ -83,6 +83,6 @@ private:
 	TWeakPtr<IObjectTreeItem> LastSelectedItem;
 	
 public:
-	TSharedPtr<ObjectCategoryFilter> CategoryFilter;
+	TSharedPtr<FObjectCategoryFilter> CategoryFilter;
 	TSharedPtr<ObjectTextFilter> ObjectTextFilter;
 };

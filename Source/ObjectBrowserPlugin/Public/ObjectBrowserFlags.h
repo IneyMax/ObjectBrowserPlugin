@@ -15,4 +15,4 @@
 /**
  * Toggle example code validation
  */
-#define ENABLE_SUBSYSTEM_BROWSER_EXAMPLES 0
+#define ENABLE_OBJECT_BROWSER_EXAMPLES 0

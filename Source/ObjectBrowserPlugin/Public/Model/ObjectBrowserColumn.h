@@ -49,7 +49,7 @@ struct OBJECTBROWSERPLUGIN_API FObjectDynamicColumn : public TSharedFromThis<FOb
 	/**
 	 * Perform sorting of table items. WIP
 	 */
-	virtual void SortItems(TArray<ObjectTreeItemPtr>& RootItems, const EColumnSortMode::Type SortMode) const {}
+	virtual void SortItems(TArray<FObjectTreeItemPtr>& RootItems, const EColumnSortMode::Type SortMode) const {}
 
 	/**
 	 * Test if custom column name is valid (not None or permanent column)
@@ -92,5 +92,5 @@ protected:
 	/* text columns support sorting by default */
 	virtual bool SupportsSorting() const override { return true; }
 	
-	virtual void SortItems(TArray<ObjectTreeItemPtr>& RootItems, const EColumnSortMode::Type SortMode) const override;
+	virtual void SortItems(TArray<FObjectTreeItemPtr>& RootItems, const EColumnSortMode::Type SortMode) const override;
 };

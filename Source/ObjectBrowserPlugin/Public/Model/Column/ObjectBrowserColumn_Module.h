@@ -10,8 +10,6 @@
  */
 struct FObjectDynamicColumn_Module : public FObjectDynamicTextColumn
 {
-	using Super = FObjectDynamicTextColumn;
-
 	FObjectDynamicColumn_Module();
 
 	virtual bool IsVisibleByDefault() const override { return true; }

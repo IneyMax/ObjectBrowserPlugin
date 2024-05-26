@@ -3,13 +3,13 @@
 #include "ObjectBrowserSettings.h"
 #include "ObjectBrowserModule.h"
 #include "Model/ObjectBrowserCategory.h"
-#include "Model/ObjectBrowserModel.h"
 
 UObjectBrowserSettings::FSettingChangedEvent UObjectBrowserSettings::SettingChangedEvent;
 
 const FName FObjectBrowserConfigMeta::MD_ConfigAffectsView(TEXT("ConfigAffectsView"));
 const FName FObjectBrowserConfigMeta::MD_ConfigAffectsColumns(TEXT("ConfigAffectsColumns"));
 const FName FObjectBrowserConfigMeta::MD_ConfigAffectsDetails(TEXT("ConfigAffectsDetails"));
+
 
 UObjectBrowserSettings::UObjectBrowserSettings()
 {

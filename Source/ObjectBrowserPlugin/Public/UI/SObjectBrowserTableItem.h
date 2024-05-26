@@ -5,13 +5,10 @@
 #include "ObjectBrowserFwd.h"
 #include "Widgets/Views/STableRow.h"
 
-class FObjectModel;
-class SObjectBrowser;
 
-
-class SObjectBrowserTableItem : public SMultiColumnTableRow<ObjectTreeItemPtr>
+class SObjectBrowserTableItem : public SMultiColumnTableRow<FObjectTreeItemPtr>
 {
-	using Super = SMultiColumnTableRow<ObjectTreeItemPtr>;
+	using Super = SMultiColumnTableRow<FObjectTreeItemPtr>;
 public:
 	SLATE_BEGIN_ARGS( SObjectBrowserTableItem )
 		: _IsItemExpanded( false )
@@ -20,7 +17,7 @@ public:
 		SLATE_ARGUMENT(TSharedPtr<FObjectModel>, InModel)
 
 		/** Item model this widget represents */
-		SLATE_ARGUMENT(ObjectTreeItemPtr, InItemModel)
+		SLATE_ARGUMENT(FObjectTreeItemPtr, InItemModel)
 
 		/** The hierarchy that this item belongs to */
 		SLATE_ARGUMENT(TSharedPtr<SObjectBrowser>, InBrowser)
@@ -44,7 +41,7 @@ public:
 
 public:
 	TSharedPtr<FObjectModel>			Model;
-	ObjectTreeItemPtr				Item;
+	FObjectTreeItemPtr				Item;
 	TSharedPtr<SObjectBrowser>	Browser;
 
 	TAttribute<FText>					HighlightText;

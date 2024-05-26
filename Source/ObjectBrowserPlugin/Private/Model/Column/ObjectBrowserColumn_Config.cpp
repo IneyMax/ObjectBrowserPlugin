@@ -2,7 +2,7 @@
 
 #include "Model/Column/ObjectBrowserColumn_Config.h"
 
-#include "Item/ObjectTreeObjectItem.h"
+#include "Item/ObjectBrowserTreeObjectItem.h"
 
 #define LOCTEXT_NAMESPACE "ObjectBrowser"
 
@@ -17,7 +17,7 @@ FObjectDynamicColumn_Config::FObjectDynamicColumn_Config()
 
 FText FObjectDynamicColumn_Config::ExtractText(TSharedRef<const IObjectTreeItem> Item) const
 {
-	if (const FObjectTreeObjectItem* ObjectItem = Item->GetAsObjectDescriptor())
+	if (const FObjectBrowserTreeObjectItem* ObjectItem = Item->GetAsObjectDescriptor())
 	{
 		return Item->IsConfigExportable() ? FText::FromName(ObjectItem->ConfigName) : FText::GetEmpty();
 	}
@@ -27,7 +27,7 @@ FText FObjectDynamicColumn_Config::ExtractText(TSharedRef<const IObjectTreeItem>
 
 void FObjectDynamicColumn_Config::PopulateSearchStrings(const IObjectTreeItem& Item, TArray<FString>& OutSearchStrings) const
 {
-	if (const FObjectTreeObjectItem* ObjectItem = Item.GetAsObjectDescriptor())
+	if (const FObjectBrowserTreeObjectItem* ObjectItem = Item.GetAsObjectDescriptor())
 	{
 		if (ObjectItem->IsConfigExportable())
 		{

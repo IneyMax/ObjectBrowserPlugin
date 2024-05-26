@@ -13,6 +13,7 @@
 const FName FObjectBrowserStyle::StyleName("ObjectBrowserStyle");
 TSharedPtr<FObjectBrowserStyle> FObjectBrowserStyle::StyleInstance;
 
+
 void FObjectBrowserStyle::Register()
 {
 	check(!StyleInstance.IsValid());
@@ -38,8 +39,8 @@ FObjectBrowserStyle& FObjectBrowserStyle::Get()
 
 FObjectBrowserStyle::FObjectBrowserStyle() : FSlateStyleSet(StyleName)
 {
-	const FVector2D Icon16x16(16.f, 16.f);
-	const FVector2D Icon64x64(64.f, 64.f);
+	// const FVector2D Icon16x16(16.f, 16.f);
+	// const FVector2D Icon64x64(64.f, 64.f);
 
 	TSharedPtr<IPlugin> Plugin = IPluginManager::Get().FindPlugin(TEXT("ObjectBrowserPlugin"));
 	check(Plugin.IsValid());

@@ -2,17 +2,14 @@
 
 #pragma once
 
-#include "Widgets/Views/SHeaderRow.h"
-
-class FObjectModel;
-class SObjectBrowser;
+#include "ObjectBrowserFwd.h"
+#include "Widgets/Views/STreeView.h"
 
 
-class SObjectHeaderRow : public SHeaderRow
+class SObjectBrowserTreeView : public STreeView<FObjectTreeItemPtr>
 {
 public:
 	void Construct(const FArguments& InArgs, const TSharedPtr<FObjectModel>& InModel, const TSharedPtr<SObjectBrowser>& InBrowser);
-	void RebuildColumns();
 
 private:
 	TSharedPtr<FObjectModel> Model;

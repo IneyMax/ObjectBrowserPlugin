@@ -24,7 +24,7 @@ void FSimpleObjectCategory::Select(UWorld* InContext, TArray<UObject*>& OutData)
 
 #undef LOCTEXT_NAMESPACE
 
-#if ENABLE_SUBSYSTEM_BROWSER_EXAMPLES
+#if ENABLE_OBJECT_BROWSER_EXAMPLES
 
 // 2. Call this in your editor modules StartupModule to register a new category
 void RegisterCategoryExample()

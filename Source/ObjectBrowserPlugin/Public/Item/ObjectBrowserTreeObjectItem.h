@@ -5,13 +5,11 @@
 #include "IObjectTreeItem.h"
 #include "ObjectBrowserFwd.h"
 
-class FObjectModel;
-
 
 /**
  * Object node
  */
-struct OBJECTBROWSERPLUGIN_API FObjectTreeObjectItem final : public IObjectTreeItem
+struct OBJECTBROWSERPLUGIN_API FObjectBrowserTreeObjectItem final : public IObjectTreeItem
 {
 	TWeakObjectPtr<UObject>			Object;
 	TWeakObjectPtr<UClass>			Class;
@@ -37,15 +35,15 @@ struct OBJECTBROWSERPLUGIN_API FObjectTreeObjectItem final : public IObjectTreeI
 	bool							bIsGameModuleClass = false;
 	bool							bIsPluginClass = false;
 
-	FObjectTreeObjectItem();
-	FObjectTreeObjectItem(TSharedRef<FObjectModel> InModel, TSharedPtr<IObjectTreeItem> InParent, UObject* Instance);
+	FObjectBrowserTreeObjectItem();
+	FObjectBrowserTreeObjectItem(TSharedRef<FObjectModel> InModel, TSharedPtr<IObjectTreeItem> InParent, UObject* Instance);
 
 	virtual FObjectTreeItemID GetID() const override { return ClassName; }
 	virtual bool IsSelected() const override;
 
 	virtual FText GetDisplayName() const override;
 
-	virtual FObjectTreeObjectItem* GetAsObjectDescriptor() const override {  return const_cast<FObjectTreeObjectItem*>(this); }
+	virtual FObjectBrowserTreeObjectItem* GetAsObjectDescriptor() const override {  return const_cast<FObjectBrowserTreeObjectItem*>(this); }
 	virtual UObject* GetObjectForDetails() const override { return Object.Get(); }
 	virtual bool IsStale() const override { return Object.IsStale() || Class.IsStale(); }
 	virtual bool IsConfigExportable() const override { return bConfigExportable; }

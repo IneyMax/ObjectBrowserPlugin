@@ -10,7 +10,7 @@
 #include "Framework/Notifications/NotificationManager.h"
 #include "Interfaces/IPluginManager.h"
 #include "HAL/PlatformApplicationMisc.h"
-#include "Item/ObjectTreeObjectItem.h"
+#include "Item/ObjectBrowserTreeObjectItem.h"
 
 static FAutoConsoleCommandWithWorldArgsAndOutputDevice CmdPrintClassData(
 	TEXT("SB.PrintClass"), TEXT("Dump class details"),
@@ -191,7 +191,7 @@ void FObjectBrowserUtils::SetClipboardText(const FString& ClipboardText)
 	FPlatformApplicationMisc::ClipboardCopy(*ClipboardText);
 }
 
-FString FObjectBrowserUtils::GenerateConfigExport(const FObjectTreeObjectItem* SelectedObject, bool bModifiedOnly)
+FString FObjectBrowserUtils::GenerateConfigExport(const FObjectBrowserTreeObjectItem* SelectedObject, bool bModifiedOnly)
 {
 	FString ConfigBlock;
 	ConfigBlock.Reserve(256);

@@ -2,13 +2,14 @@
 
 #include "UI/SObjectBrowserTableItem.h"
 #include "Model/ObjectBrowserModel.h"
-#include "UI/SObjectBrowserTableItemTooltip.h"
+#include "UI/SObjectItemTooltip.h"
 #include "SlateOptMacros.h"
 #include "ObjectBrowserFlags.h"
 #include "ObjectBrowserSettings.h"
 #include "ObjectBrowserStyle.h"
 #include "Item/IObjectTreeItem.h"
 #include "Model/ObjectBrowserColumn.h"
+
 
 #define LOCTEXT_NAMESPACE "ObjectBrowser"
 
@@ -20,7 +21,7 @@ void SObjectBrowserTableItem::Construct(const FArguments& InArgs, TSharedRef<STa
 	IsItemExpanded = InArgs._IsItemExpanded;
 	HighlightText = InArgs._HighlightText;
 
-	SetToolTip(SNew(SObjectBrowserTableItemTooltip).ObjectBrowserTableItem(SharedThis(this)));
+	SetToolTip(SNew(SObjectItemTooltip).ObjectBrowserTableItem(SharedThis(this)));
 
 	FSuperRowType::FArguments Args = FSuperRowType::FArguments();
 	Super::Construct(Args, OwnerTableView);
@@ -36,7 +37,7 @@ TSharedRef<SWidget> SObjectBrowserTableItem::GenerateWidgetForColumn(const FName
 
 	TSharedPtr<SWidget> TableRowContent = SNullWidget::NullWidget;
 
-	ObjectColumnPtr Column = Model->FindTableColumn(ColumnID);
+	FObjectColumnPtr Column = Model->FindTableColumn(ColumnID);
 	if (Column.IsValid() && Model->ShouldShowColumn(Column) )
 	{
 		TableRowContent = Column->GenerateColumnWidget(Item.ToSharedRef(), SharedThis(this));

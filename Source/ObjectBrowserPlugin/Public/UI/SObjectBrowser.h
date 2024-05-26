@@ -6,17 +6,14 @@
 #include "Widgets/SCompoundWidget.h"
 #include "Model/ObjectBrowserModel.h"
 
-struct FObjectTreeObjectItem;
-class SObjectTreeWidget;
-class IDetailsView;
-
 
 /**
  * Object Browser tab content widget
  */
 class SObjectBrowser : public SCompoundWidget
 {
-	friend class SObjectHeaderRow;
+	friend class SObjectBrowserHeaderRow;
+	
 public:
 	SLATE_BEGIN_ARGS(SObjectBrowser)
 		:_InWorld(nullptr)
@@ -26,16 +23,15 @@ public:
 
 	SObjectBrowser();
 	virtual ~SObjectBrowser();
-
-	FText GetFilterClassText() const;
-	TSharedRef<SWidget> MakeFilterMenu();
-	void AddBoolFilter(FMenuBuilder& MenuBuilder, FText Text, FText InToolTip, bool* BoolOption);
+	
 	void Construct(const FArguments& InArgs);
-	bool IsItemSelected(ObjectTreeItemPtr Item);
+	bool IsItemSelected(FObjectTreeItemPtr Item);
 
 protected:
 	virtual void Tick( const FGeometry& AllotedGeometry, const double InCurrentTime, const float InDeltaTime ) override;
 
+	FText GetFilterClassText() const;
+	
 	void Populate();
 	void EmptyTreeItems();
 
@@ -67,15 +63,15 @@ protected:
 
 	// Tree view
 	void SetupColumns(SHeaderRow& HeaderRow);
-	TSharedRef<class ITableRow> GenerateTreeRow(ObjectTreeItemPtr Item, const TSharedRef<STableViewBase>& OwnerTable);
-	void GetChildrenForTree(ObjectTreeItemPtr Item, TArray<ObjectTreeItemPtr>& OutChildren);
-	void OnExpansionChanged(ObjectTreeItemPtr Item, bool bIsItemExpanded);
-	void OnSelectionChanged(const ObjectTreeItemPtr Item, ESelectInfo::Type SelectInfo);
-	void OnTreeViewMouseButtonDoubleClick(ObjectTreeItemPtr Item);
+	TSharedRef<class ITableRow> GenerateTreeRow(FObjectTreeItemPtr Item, const TSharedRef<STableViewBase>& OwnerTable);
+	void GetChildrenForTree(FObjectTreeItemPtr Item, TArray<FObjectTreeItemPtr>& OutChildren);
+	void OnExpansionChanged(FObjectTreeItemPtr Item, bool bIsItemExpanded);
+	void OnSelectionChanged(const FObjectTreeItemPtr Item, ESelectInfo::Type SelectInfo);
+	void OnTreeViewMouseButtonDoubleClick(FObjectTreeItemPtr Item);
 
 	EColumnSortMode::Type GetColumnSortMode(FName ColumnId) const;
 	void OnColumnSortModeChanged( const EColumnSortPriority::Type SortPriority, const FName& ColumnId, const EColumnSortMode::Type InSortMode );
-	void SortItems(TArray<ObjectTreeItemPtr>& Items) const;
+	void SortItems(TArray<FObjectTreeItemPtr>& Items) const;
 
 	void ToggleDisplayColumn(FName ColumnName);
 	void ToggleTableColoring();
@@ -91,8 +87,8 @@ protected:
 	TMap<FObjectTreeItemID, bool> GetParentsExpansionState() const;
 	void SetParentsExpansionState(const TMap<FObjectTreeItemID, bool>& ExpansionInfo);
 
-	ObjectTreeItemPtr GetFirstSelectedItem() const;
-	const FObjectTreeObjectItem* GetFirstSelectedObject() const;
+	FObjectTreeItemPtr GetFirstSelectedItem() const;
+	const FObjectBrowserTreeObjectItem* GetFirstSelectedObject() const;
 	FObjectTreeItemID GetFirstSelectedItemId() const;
 
 	// World picker
@@ -111,7 +107,7 @@ protected:
 
 	TSharedRef<IDetailsView> CreateDetails();
 	void RecreateDetails();
-	void SetSelectedObject(ObjectTreeItemPtr Item);
+	void SetSelectedObject(FObjectTreeItemPtr Item);
 	void ResetSelectedObject();
 
 	bool IsDetailsPropertyEditingEnabled();
@@ -133,7 +129,7 @@ protected:
 	void OnObjectDataChanged(TSharedRef<IObjectTreeItem> Item);
 
 private:
-	TSharedPtr<FObjectModel> ObjectModel;
+	TSharedPtr<FObjectModel>	ObjectModel;
 
 	TSharedPtr<IDetailsView>	DetailsView;
 	TSharedPtr<SVerticalBox>	DetailsViewBox;
@@ -142,20 +138,20 @@ private:
 	TSharedPtr<SComboButton>    ViewOptionsComboButton;
 
 	TSharedPtr<ObjectTextFilter> SearchBoxObjectFilter;
-	TSharedPtr<ObjectCategoryFilter> CategoryFilter;
+	TSharedPtr<FObjectCategoryFilter> CategoryFilter;
 	int32 FilteredObjectsCount = 0;
 
-	TSharedPtr<SObjectHeaderRow> HeaderRowWidget;
+	TSharedPtr<SObjectBrowserHeaderRow> HeaderRowWidget;
 
-	TArray<ObjectColumnPtr> DynamicColumnSlots;
+	TArray<FObjectColumnPtr> DynamicColumnSlots;
 
 	/** Root items for the tree widget */
-	TArray<ObjectTreeItemPtr> RootTreeItems;
+	TArray<FObjectTreeItemPtr> RootTreeItems;
 
 	/** All items that are currently displayed in the tree widget */
-	TMap<FObjectTreeItemID, ObjectTreeItemPtr> TreeItemMap;
+	TMap<FObjectTreeItemID, FObjectTreeItemPtr> TreeItemMap;
 
-	TSharedPtr<SObjectTreeWidget> TreeWidget;
+	TSharedPtr<SObjectBrowserTreeView> TreeWidget;
 
 	UClass* FilterClass = UObject::StaticClass();
 	bool bShouldIncludeDefaultObjects = false;
